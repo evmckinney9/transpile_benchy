@@ -17,7 +17,7 @@ repos:
       - id: check-yaml
       - id: detect-private-key
       - id: check-added-large-files
-      - id: forbid-submodules
+      # - id: forbid-submodules
       - id: name-tests-test
         args: [--pytest]
       - id: pretty-format-json
