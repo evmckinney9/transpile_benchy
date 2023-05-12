@@ -1,6 +1,6 @@
 # transpile_benchy
 
-#### This under construction repository is a collection of various benchmark tools for testing transpilers in the field of quantum computing. It aims to provide an aggregated set of circuits worth testing transpilers against, with a focus on a user-friendly and streamlined process.
+#### This under construction repository is a collection of various benchmark tools for testing transpilers in the field of quantum computing. It aims to provide an aggregated set of circuits worth testing transpilers against.
 
 ![Tests](https://github.com/evmckinney9/transpile_benchy/actions/workflows/tests.yml/badge.svg?branch=main)
 ![Format Check](https://github.com/evmckinney9/transpile_benchy/actions/workflows/format-check.yml/badge.svg?branch=main)
@@ -11,7 +11,7 @@ The primary aim of this project is to simplify the process of testing new transp
 
 ### Selected Benchmark Suite
 
-The main benchmark suite that we will use for this project is [QASMBench](https://github.com/pnnl/QASMBench). It provides a long list of qasm files which serve as an excellent resource for running various transpilation configurations.
+The main benchmark suite that we will use for this project is [QASMBench](https://github.com/pnnl/QASMBench). It provides a long list of qasm files which serve as an excellent resource for running various transpilation configurations. Other submodules will be included as well, provided they contain qasm files not already included in QASMBench.
 
 ![initial_plot](images/transpile_benchy_small.svg)
 

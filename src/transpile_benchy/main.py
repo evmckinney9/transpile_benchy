@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from qiskit import QuantumCircuit
 from qiskit.transpiler.passmanager import PassManager
-from tqdm.notebook import tqdm
+from tqdm import tqdm
 
 
 class Benchmark:
@@ -30,9 +30,20 @@ class Benchmark:
         """Load QASM files from submodules."""
         filenames = glob.iglob(f"../../QASMBench/{self.size}/**/*.qasm", recursive=True)
         # # Filter out files containing '_transpiled' in their names
-        filtered_filenames = (
+        filtered_filenames = list(
             filename for filename in filenames if "_transpiled" not in filename
         )
+
+        filenames = glob.iglob(
+            "../../red-queen/red_queen/games/applications/qasm/*.qasm"
+        )  # noqa: E501
+        # append filenames to filtered_filenames
+        filtered_filenames.extend(filenames)
+
+        # filenames = glob.iglob("../../red-queen/red_queen/games/mapping/benchmarks/misc/*.qasm")  # noqa: E501
+        # # append filenames to filtered_filenames
+        # filtered_filenames.extend(filenames)
+
         return filtered_filenames
 
     def qiskit_circuit_generator(self, filenames):
@@ -52,7 +63,7 @@ class Benchmark:
         circuits = self.qiskit_circuit_generator(filenames)
         self.depth_list = []
 
-        for circuit in tqdm(circuits):
+        for circuit in tqdm(circuits, total=len(filenames)):
             # print(f"Running {circuit.name}")
             self.inner_depth_list = []
             for i, transpiler in enumerate(self.transpilers):
@@ -87,7 +98,7 @@ class Benchmark:
             plt.ylabel("Depth")
             plt.title("Transpiler Depth Comparison")
             max_fontsize = 10
-            min_fontsize = 6
+            min_fontsize = 4
             font_size = max(
                 min(max_fontsize, 800 // len(self.depth_list)), min_fontsize
             )  # noqa: E501
