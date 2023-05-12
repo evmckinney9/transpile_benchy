@@ -60,7 +60,7 @@ class Benchmark:
                 tc = transpiler(circuit)
                 self.depth_list[-1].append(tc.depth())
 
-    def plot(self):
+    def plot(self, save=False):
         """Plot benchmark results."""
         with plt.style.context("ipynb", "colorsblind10"):
             bar_width = 0.35
@@ -87,6 +87,8 @@ class Benchmark:
             )
             plt.legend()
 
-            # Show the plot
-            plt.show()
-        return plt
+        if save:
+            plt.savefig(f"transpile_benchy_{self.size}.svg", dpi=300)
+
+        # Show the plot
+        plt.show()

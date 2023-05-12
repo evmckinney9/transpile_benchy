@@ -13,7 +13,7 @@ The primary aim of this project is to simplify the process of testing new transp
 
 The main benchmark suite that we will use for this project is [QASMBench](https://github.com/pnnl/QASMBench). It provides a long list of qasm files which serve as an excellent resource for running various transpilation configurations.
 
-![initial_plot](images/transpile_benchy.svg)
+![initial_plot](images/transpile_benchy_small.svg)
 
 ### Other Existing Benchmark Suites
 
