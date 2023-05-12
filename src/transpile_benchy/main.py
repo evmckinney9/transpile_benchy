@@ -38,7 +38,7 @@ class Benchmark:
     def qiskit_circuit_generator(self, filenames):
         """Return a generator for Qiskit circuits."""
         self.circuit_names = []
-        for filename in list(filenames)[:10]:
+        for filename in filenames:
             # Load transpiled file
             circuit = QuantumCircuit.from_qasm_file(filename)
             # clean filename for circuit name
@@ -54,11 +54,18 @@ class Benchmark:
 
         for circuit in tqdm(circuits):
             # print(f"Running {circuit.name}")
-            self.depth_list.append([])
-            for transpiler in self.transpilers:
-                # print(f"Running {transpiler}")
-                tc = transpiler(circuit)
-                self.depth_list[-1].append(tc.depth())
+            self.inner_depth_list = []
+            for i, transpiler in enumerate(self.transpilers):
+                # print(f"Transpiling with transpiler {i+1}")
+                # XXX should be transpiler.run() instead ?
+                transpiled_circuit = transpiler(circuit)
+                self.inner_depth_list.append(transpiled_circuit.depth())
+
+            # remove circuits with depth > 50
+            if any(depth > 50 for depth in self.inner_depth_list):
+                self.circuit_names.remove(circuit.name)
+            else:
+                self.depth_list.append(self.inner_depth_list)
 
     def plot(self, save=False):
         """Plot benchmark results."""
@@ -79,12 +86,20 @@ class Benchmark:
             plt.xlabel("Circuit")
             plt.ylabel("Depth")
             plt.title("Transpiler Depth Comparison")
+            max_fontsize = 10
+            min_fontsize = 6
+            font_size = max(
+                min(max_fontsize, 800 // len(self.depth_list)), min_fontsize
+            )  # noqa: E501
+
             plt.xticks(
                 np.arange(len(self.depth_list))
-                + bar_width * (transpiler_count - 1) / 2,
+                + bar_width * (transpiler_count - 1) / 2,  # noqa: E501
                 self.circuit_names,
                 rotation="vertical",
+                fontsize=font_size,
             )
+
             plt.legend()
 
         if save:
