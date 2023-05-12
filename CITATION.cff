@@ -4,7 +4,7 @@ authors:
   - family-names: McKinney
     given-names: Evan
     orcid: https://orcid.org/0000-0002-4865-5458
-title: "project_name"
+title: "transpile_benchy"
 version: 0.1.0
 doi: 10.5281/zenodo.1234
 date-released: 2023-04-19
