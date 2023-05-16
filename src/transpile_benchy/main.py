@@ -15,7 +15,9 @@ from tqdm import tqdm
 class Benchmark:
     """Benchmark runner."""
 
-    def __init__(self, *transpilers: Tuple[PassManager], size="small"):
+    def __init__(
+        self, *transpilers: Tuple[PassManager], size="small", prepath="../../"
+    ):
         """Initialize benchmark runner.
 
         Args:
@@ -25,17 +27,20 @@ class Benchmark:
         self.depth_list = None
         self.circuit_names = None
         self.size = size
+        self.prepath = prepath
 
     def load_qasm_files(self):
         """Load QASM files from submodules."""
-        filenames = glob.iglob(f"../../QASMBench/{self.size}/**/*.qasm", recursive=True)
+        filenames = glob.iglob(
+            f"{self.prepath}/QASMBench/{self.size}/**/*.qasm", recursive=True
+        )
         # # Filter out files containing '_transpiled' in their names
         filtered_filenames = list(
             filename for filename in filenames if "_transpiled" not in filename
         )
 
         filenames = glob.iglob(
-            "../../red-queen/red_queen/games/applications/qasm/*.qasm"
+            "{self.prepath}/red-queen/red_queen/games/applications/qasm/*.qasm"
         )  # noqa: E501
         # append filenames to filtered_filenames
         filtered_filenames.extend(filenames)
@@ -66,14 +71,44 @@ class Benchmark:
         for circuit in tqdm(circuits, total=len(filenames)):
             # print(f"Running {circuit.name}")
             self.inner_depth_list = []
-            for i, transpiler in enumerate(self.transpilers):
-                # print(f"Transpiling with transpiler {i+1}")
-                # XXX should be transpiler.run() instead ?
-                transpiled_circuit = transpiler(circuit)
-                self.inner_depth_list.append(transpiled_circuit.depth())
+
+            if (
+                circuit.depth(
+                    filter_function=lambda x: x.operation.name
+                    not in ["u3", "u", "rz", "rx"]
+                )
+                > 100
+            ):
+                self.circuit_names.remove(circuit.name)
+                continue
+
+            try:
+                nested_depth_list = []
+                circuit_list = []
+                for i, transpiler in enumerate(self.transpilers):
+                    # print(f"Transpiling with transpiler {i+1}")
+                    # XXX should be transpiler.run() instead ?
+                    transpiled_circuit = transpiler(circuit)
+                    circuit_list.append(transpiled_circuit)
+                    nested_depth_list.append(
+                        transpiled_circuit.depth(
+                            filter_function=lambda x: x.operation.name
+                            not in ["u3", "u", "rz", "rx"]
+                        )
+                    )
+
+                self.inner_depth_list.extend(nested_depth_list)
+                for i, transpiled_circuit in enumerate(circuit_list):
+                    transpiled_circuit.name = f"{circuit.name}_transpiled_{i}"
+                    transpiled_circuit.draw(output="mpl").show()
+
+            except Exception as e:
+                print(f"Error: {e}")
+                self.circuit_names.remove(circuit.name)
+                continue
 
             # remove circuits with depth > 50
-            if any(depth > 50 for depth in self.inner_depth_list):
+            if any(depth > 200 for depth in self.inner_depth_list):
                 self.circuit_names.remove(circuit.name)
             else:
                 self.depth_list.append(self.inner_depth_list)
