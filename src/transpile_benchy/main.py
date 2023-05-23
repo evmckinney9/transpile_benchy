@@ -86,9 +86,7 @@ class Benchmark:
                 nested_depth_list = []
                 circuit_list = []
                 for i, transpiler in enumerate(self.transpilers):
-                    # print(f"Transpiling with transpiler {i+1}")
-                    # XXX should be transpiler.run() instead ?
-                    transpiled_circuit = transpiler(circuit)
+                    transpiled_circuit = transpiler.run(circuit)
                     circuit_list.append(transpiled_circuit)
                     nested_depth_list.append(
                         transpiled_circuit.depth(
