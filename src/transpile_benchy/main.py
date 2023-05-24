@@ -16,7 +16,11 @@ class Benchmark:
     """Benchmark runner."""
 
     def __init__(
-        self, *transpilers: Tuple[PassManager], size="small", prepath="../../"
+        self,
+        *transpilers: Tuple[PassManager],
+        size="small",
+        prepath="../../",
+        circuit_list=None,
     ):
         """Initialize benchmark runner.
 
@@ -28,6 +32,7 @@ class Benchmark:
         self.circuit_names = None
         self.size = size
         self.prepath = prepath
+        self.circuit_list = circuit_list
 
     def load_qasm_files(self):
         """Load QASM files from submodules."""
@@ -62,14 +67,20 @@ class Benchmark:
             self.circuit_names.append(circuit.name)
             yield circuit
 
+    # TODO this code is a mess
     def run(self):
         """Run benchmark."""
-        filenames = self.load_qasm_files()
-        circuits = self.qiskit_circuit_generator(filenames)
+        if self.circuit_list is None:
+            filenames = self.load_qasm_files()
+            circuits = self.qiskit_circuit_generator(filenames)
+        else:
+            circuits = self.circuit_list
+            filenames = [circuit.name for circuit in circuits]
+            self.circuit_names = filenames
         self.depth_list = []
 
         for circuit in tqdm(circuits, total=len(filenames)):
-            # print(f"Running {circuit.name}")
+            print(f"Running {circuit.name}")
             self.inner_depth_list = []
 
             if (
@@ -83,6 +94,7 @@ class Benchmark:
                 continue
 
             try:
+                # XXX
                 nested_depth_list = []
                 circuit_list = []
                 for i, transpiler in enumerate(self.transpilers):
@@ -99,6 +111,8 @@ class Benchmark:
                 for i, transpiled_circuit in enumerate(circuit_list):
                     transpiled_circuit.name = f"{circuit.name}_transpiled_{i}"
                     transpiled_circuit.draw(output="mpl").show()
+
+                # XXX
 
             except Exception as e:
                 print(f"Error: {e}")
