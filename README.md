@@ -6,12 +6,20 @@
 ![Format Check](https://github.com/evmckinney9/transpile_benchy/actions/workflows/format-check.yml/badge.svg?branch=main)
 
 ### Installation
+
 I am using submodules because the dependencies are not all packaged. Therefore, after cloning the repository, you will need to run the following commands to get the submodules:
+
 ```bash
 git clone --recurse-submodules
 ```
+
 WIP: working on an improved modular approach to adding new submodules. All that would be required is adding a function telling the program how to navigate the submodule directory to build circuits (either from QASM or Qiskit).
 
+TODO improve documentation
+
+```python
+run()
+```
 
 ### Objective
 
