@@ -44,6 +44,13 @@ class Benchmark:
             filename for filename in filenames if "_transpiled" not in filename
         )
 
+        # remove filenams that contain 'vqe' or 'bwt'
+        filtered_filenames = list(
+            filename
+            for filename in filtered_filenames
+            if "vqe" not in filename and "bwt" not in filename
+        )
+
         filenames = glob.iglob(
             "{self.prepath}/red-queen/red_queen/games/applications/qasm/*.qasm"
         )  # noqa: E501
@@ -65,6 +72,10 @@ class Benchmark:
             # clean filename for circuit name
             circuit.name = filename.split("/")[-1].split(".")[0]
             self.circuit_names.append(circuit.name)
+            # remove measurements
+            circuit.remove_final_measurements()
+            # remove classical registers
+            # circuit._clbits = []
             yield circuit
 
     # TODO this code is a mess
@@ -80,37 +91,68 @@ class Benchmark:
         self.depth_list = []
 
         for circuit in tqdm(circuits, total=len(filenames)):
-            print(f"Running {circuit.name}")
             self.inner_depth_list = []
+
+            if circuit.depth() > 500:
+                self.circuit_names.remove(circuit.name)
+                continue
 
             if (
                 circuit.depth(
                     filter_function=lambda x: x.operation.name
-                    not in ["u3", "u", "rz", "rx"]
+                    not in ["u3", "u", "ry", "rz", "rx", "x", "y", "z", "h", "s", "t"]
                 )
-                > 100
+                > 150
             ):
                 self.circuit_names.remove(circuit.name)
                 continue
 
+            # if has more than 4 qubits, reject
+            if circuit.num_qubits > 30:
+                self.circuit_names.remove(circuit.name)
+                continue
+
+            print(f"Running {circuit.name}")
             try:
+                pass
+
                 # XXX
                 nested_depth_list = []
                 circuit_list = []
                 for i, transpiler in enumerate(self.transpilers):
-                    transpiled_circuit = transpiler.run(circuit)
-                    circuit_list.append(transpiled_circuit)
-                    nested_depth_list.append(
-                        transpiled_circuit.depth(
+                    best = None
+                    for _ in range(10):
+                        transpiled_circuit = transpiler.run(circuit)
+                        circuit_list.append(transpiled_circuit)
+                        # nested_depth_list.append(
+                        #     transpiled_circuit.depth(
+                        #         filter_function=lambda x: x.operation.name
+                        #         not in ["u3", "u", "rz", "rx"]
+                        #     )
+                        temp = transpiled_circuit.depth(
                             filter_function=lambda x: x.operation.name
-                            not in ["u3", "u", "rz", "rx"]
+                            not in [
+                                "u3",
+                                "u",
+                                "ry",
+                                "rz",
+                                "rx",
+                                "x",
+                                "y",
+                                "z",
+                                "h",
+                                "s",
+                                "t",
+                            ]
                         )
-                    )
+                        if best is None or temp < best:
+                            best = temp
+                    nested_depth_list.append(best)
 
                 self.inner_depth_list.extend(nested_depth_list)
-                for i, transpiled_circuit in enumerate(circuit_list):
-                    transpiled_circuit.name = f"{circuit.name}_transpiled_{i}"
-                    transpiled_circuit.draw(output="mpl").show()
+                # for i, transpiled_circuit in enumerate(circuit_list):
+                #     transpiled_circuit.name = f"{circuit.name}_transpiled_{i}"
+                # print(transpiled_circuit.draw(fold=-1))
 
                 # XXX
 
