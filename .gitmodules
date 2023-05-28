@@ -1,0 +1,6 @@
+[submodule "submodules/red-queen"]
+	path = submodules/red-queen
+	url = https://github.com/Qiskit/red-queen
+[submodule "submodules/QASMBench"]
+	path = submodules/QASMBench
+	url = https://github.com/pnnl/QASMBench
