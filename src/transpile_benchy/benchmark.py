@@ -51,14 +51,18 @@ class Benchmark:
             self.logger.debug(f"Skipping circuit {circuit.name} due to filtering")
             return
         self.logger.debug(f"Running benchmark for circuit {circuit.name}")
-        for metric in self.metrics:
-            self.logger.debug(f"Calculating {metric.name} for circuit {circuit.name}")
-            for transpiler in self.transpilers:
+
+        for transpiler in self.transpilers:
+            self.logger.debug(
+                f"Running transpiler {transpiler.__class__.__name__} \
+                    on circuit {circuit.name}"
+            )
+            transpiled_circuit = transpiler.run(circuit)
+            for metric in self.metrics:
                 self.logger.debug(
-                    f"Running transpiler {transpiler.__class__.__name__} \
-                        on circuit {circuit.name}"
+                    f"Calculating {metric.name} for circuit {circuit.name}"
                 )
-                result = metric.calculate(transpiler.run(circuit))
+                result = metric.calculate(transpiled_circuit)
                 if circuit.name not in self.results[metric.name]:
                     self.results[metric.name][circuit.name] = []
                 self.results[metric.name][circuit.name].append(result)
