@@ -1,6 +1,0 @@
-[submodule "QASMBench"]
-	path = QASMBench
-	url = https://github.com/evmckinney9/QASMBench
-[submodule "red-queen"]
-	path = red-queen
-	url = https://github.com/evmckinney9/red-queen
