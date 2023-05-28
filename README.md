@@ -5,8 +5,6 @@ The primary aim of this project is to simplify the process of testing new transp
 ![Tests](https://github.com/evmckinney9/transpile_benchy/actions/workflows/tests.yml/badge.svg?branch=main)
 ![Format Check](https://github.com/evmckinney9/transpile_benchy/actions/workflows/format-check.yml/badge.svg?branch=main)
 
-# Transpile Benchy
-
 For a full example, see `src/notebooks/main.ipynb` The project is structured into four main parts. The first three are interfaces for the different components of the benchmarking suite. The fourth is the benchmarking class itself.
 
 ### 1. `interface.py`:
