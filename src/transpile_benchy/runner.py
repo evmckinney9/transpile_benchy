@@ -10,13 +10,7 @@ the structure of the main processing method.
 from abc import ABC, abstractmethod
 
 from qiskit.transpiler import PassManager
-from qiskit.transpiler.passes import (
-    Collect2qBlocks,
-    ConsolidateBlocks,
-    Optimize1qGates,
-    OptimizeSwapBeforeMeasure,
-    Unroller,
-)
+from qiskit.transpiler.passes import Optimize1qGates, OptimizeSwapBeforeMeasure
 
 
 class AbstractRunner(ABC):
@@ -36,7 +30,7 @@ class AbstractRunner(ABC):
     @abstractmethod
     def main_process(self, circuit):
         """Process the circuit."""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def post_process(self, circuit):
@@ -49,16 +43,12 @@ class AbstractRunner(ABC):
         circuit = self.pre_process(circuit)
 
         # Main processing
+        self.main_pm.property_set = self.pre_pm.property_set
         circuit = self.main_process(circuit)
 
         # Post-processing
+        self.post_pm.property_set = self.main_pm.property_set
         circuit = self.post_process(circuit)
-
-        # Combine property sets
-        for prop in self.pre_pm.property_set.keys():
-            self.main_pm.property_set[prop] = self.pre_pm.property_set[prop]
-        for prop in self.post_pm.property_set.keys():
-            self.main_pm.property_set[prop] = self.post_pm.property_set[prop]
 
         return circuit
 
@@ -69,13 +59,8 @@ class CustomPassManager(AbstractRunner):
     def pre_process(self, circuit):
         """Pre-process the circuit before running."""
         # Add pre-processing steps here
-        self.pre_pm.append(Unroller(["u", "cx", "iswap", "swap"]))
+        # self.pre_pm.append(Unroller(["u", "cx", "iswap", "swap"]))
         return self.pre_pm.run(circuit)
-
-    def main_process(self, circuit):
-        """Process the circuit."""
-        # This method needs to be implemented by subclasses
-        raise NotImplementedError
 
     def post_process(self, circuit):
         """Post-process the circuit after running."""
@@ -83,8 +68,8 @@ class CustomPassManager(AbstractRunner):
             [
                 OptimizeSwapBeforeMeasure(),
                 Optimize1qGates(basis=["u", "cx", "iswap", "swap"]),
-                Collect2qBlocks(),
-                ConsolidateBlocks(force_consolidate=True),
+                # Collect2qBlocks(),
+                # ConsolidateBlocks(force_consolidate=True),
             ]
         )
         return self.post_pm.run(circuit)

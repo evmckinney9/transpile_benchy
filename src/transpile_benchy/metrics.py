@@ -22,6 +22,10 @@ class MetricInterface(ABC):
 class DepthMetric(MetricInterface):
     """Calculate the depth of a circuit."""
 
+    def __init__(self):
+        """Initialize the metric."""
+        self.name = "Depth"
+
     def calculate(self, circuit: QuantumCircuit) -> float:
         """Calculate the depth of a circuit."""
         exclude_gates = [
@@ -39,7 +43,7 @@ class DepthMetric(MetricInterface):
             "s",
             "t",
         ]
-        return circuit.depth(filter_function=lambda x: x.op.name not in exclude_gates)
+        return circuit.depth(filter_function=lambda x: x[0].name not in exclude_gates)
 
 
 # You can add more metrics here.
