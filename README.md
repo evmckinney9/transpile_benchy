@@ -1,18 +1,19 @@
 # transpile_benchy
 
-#### This under construction repository is a collection of various benchmark tools for testing transpilers in the field of quantum computing. It aims to provide an aggregated set of circuits worth testing transpilers against.
+The primary aim of this project is to simplify the process of testing new transpilation passes against a wide range of circuits. In my research studying quantum circuit optimizations, maintaining this repository deocupled from individual projects will make it much easier to evaluate and write reports. Creating a streamlined benchmark suite makes it easy to test the efficiency between multiple transpilation configurations.
 
 ![Tests](https://github.com/evmckinney9/transpile_benchy/actions/workflows/tests.yml/badge.svg?branch=main)
 ![Format Check](https://github.com/evmckinney9/transpile_benchy/actions/workflows/format-check.yml/badge.svg?branch=main)
-Thanks for sharing the `interface.py`, `metrics.py`, and `runner.py` files. Below is a draft for the `README.md` that you asked for:
 
 # Transpile Benchy
 
-The project is structured into four main parts:
+For a full example, see `src/notebooks/main.ipynb` The project is structured into four main parts. The first three are interfaces for the different components of the benchmarking suite. The fourth is the benchmarking class itself.
 
-1. `interface.py`: This is the interface for quantum circuit sources, i.e., submodules. The base class `SubmoduleInterface` has the abstract method `get_quantum_circuits()`, which should return a list of QuantumCircuits. This class is intended to be subclassed for different sources of QuantumCircuits. Example subclasses provided are `QASMBench` and `RedQueen`.
+### 1. `interface.py`:
 
-### Example QASMBench
+This is the interface for quantum circuit sources, i.e., submodules. The base class `SubmoduleInterface` has the abstract method `get_quantum_circuits()`, which should return a list of QuantumCircuits. This class is intended to be subclassed for different sources of QuantumCircuits. Example subclasses provided are `QASMBench` and `RedQueen`. This key functionality allows for finding externally defined projects each with their own set of pre-defined circuits which can be easily added to the benchmark suite here.
+
+#### Example QASMBench
 
 Here, I use the base class `QASMInterface` so all that is left is to define the `get_qasm_files()` function, which is specific to the structure of the submodule.
 
@@ -43,9 +44,11 @@ class QASMBench(QASMInterface):
         return list(qasm_files)
 ```
 
-2. `metrics.py`: This file contains the `MetricInterface` abstract base class, which needs to be subclassed to define metrics. The abstract method `calculate()` should implement the calculation of the metric from a given QuantumCircuit. An example metric `DepthMetric` is provided.
+### 2. `metrics.py`:
 
-### Example DepthMetric
+This file contains the `MetricInterface` abstract base class, which needs to be subclassed to define metrics. The abstract method `calculate()` should implement the calculation of the metric from a given QuantumCircuit. An example metric `DepthMetric` is provided.
+
+#### Example DepthMetric
 
 We write a function to calculate depth, which finds the critical path of the circuit defined only over 2Q gates.
 
@@ -64,9 +67,11 @@ class DepthMetric(MetricInterface):
 
 ```
 
-3. `runner.py`: This file includes `AbstractRunner`, an abstract base class that outlines the structure of a custom transpiler. It defines the `pre_process()`, `main_process()`, and `post_process()` methods which are meant to be implemented in subclasses for different types of transpilers. The `run()` method is also defined here which runs the three processing methods and returns the resulting circuit. An example class `CustomPassManager` is provided which is a custom transpiler that outlines the structure of the main processing method.
+### 3. `runner.py`:
 
-### Example Trivial_Basic
+This file includes `AbstractRunner`, an abstract base class that outlines the structure of a custom transpiler. It defines the `pre_process()`, `main_process()`, and `post_process()` methods which are meant to be implemented in subclasses for different types of transpilers. The `run()` method is also defined here which runs the three processing methods and returns the resulting circuit. An example class `CustomPassManager` is provided which is a custom transpiler that outlines the structure of the main processing method.
+
+#### Example Trivial_Basic
 
 Use the base class `CustomPassManager`, and assign which Qiskit layout and routing passes we want to use.
 
@@ -86,9 +91,9 @@ class Trivial_Basic(CustomPassManager):
         return self.main_pm.run(circuit)
 ```
 
-4. `benchmark.py`: This is the core benchmarking class `Benchmark`. It loads circuits from the submodules, applies the transpilers to them, calculates metrics on the transpiled circuits, and plots the results. The plots compare the metrics of the different transpilers on each circuit.
+### 4. `benchmark.py`:
 
-#### For the full example, see `src/notebooks/main.ipynb`
+This is the core benchmarking class `Benchmark`. It loads circuits from the submodules, applies the transpilers to them, calculates metrics on the transpiled circuits, and plots the results. The plots compare the metrics of the different transpilers on each circuit.
 
 ![initial_plot](images/transpile_benchy_Depth.svg)
 
@@ -99,10 +104,6 @@ I am using submodules because the dependencies are not all packaged. Therefore, 
 ```bash
 git clone --recurse-submodules
 ```
-
-### Objective
-
-The primary aim of this project is to simplify the process of testing new transpilation passes against a wide range of circuits. In my research studying quantum circuit optimizations, maintaining this repository deocupled from individual projects will make it much easier to evaluate and write reports. Creating a streamlined benchmark suite makes it easy to test the efficiency between multiple transpilation configurations. The repository will also feature functionalities for saving data and generating results in the form of tables and charts.
 
 ### Selected Benchmark Suite
 
