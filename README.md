@@ -4,6 +4,19 @@
 
 ![Tests](https://github.com/evmckinney9/transpile_benchy/actions/workflows/tests.yml/badge.svg?branch=main)
 ![Format Check](https://github.com/evmckinney9/transpile_benchy/actions/workflows/format-check.yml/badge.svg?branch=main)
+Thanks for sharing the `interface.py`, `metrics.py`, and `runner.py` files. Below is a draft for the `README.md` that you asked for:
+
+# Transpile Benchy
+
+The project is structured into four main parts:
+
+1. `interface.py`: This is the interface for quantum circuit sources, i.e., submodules. The base class `SubmoduleInterface` has the abstract method `get_quantum_circuits()`, which should return a list of QuantumCircuits. This class is intended to be subclassed for different sources of QuantumCircuits. Example subclasses provided are `QASMBench` and `RedQueen`.
+
+2. `metrics.py`: This file contains the `MetricInterface` abstract base class, which needs to be subclassed to define metrics. The abstract method `calculate()` should implement the calculation of the metric from a given QuantumCircuit. An example metric `DepthMetric` is provided.
+
+3. `runner.py`: This file includes `AbstractRunner`, an abstract base class that outlines the structure of a custom transpiler. It defines the `pre_process()`, `main_process()`, and `post_process()` methods which are meant to be implemented in subclasses for different types of transpilers. The `run()` method is also defined here which runs the three processing methods and returns the resulting circuit. An example class `CustomPassManager` is provided which is a custom transpiler that outlines the structure of the main processing method.
+
+4. `benchmark.py`: This is the core benchmarking class `Benchmark`. It loads circuits from the submodules, applies the transpilers to them, calculates metrics on the transpiled circuits, and plots the results. The plots compare the metrics of the different transpilers on each circuit.
 
 ### Installation
 
@@ -11,14 +24,6 @@ I am using submodules because the dependencies are not all packaged. Therefore, 
 
 ```bash
 git clone --recurse-submodules
-```
-
-WIP: working on an improved modular approach to adding new submodules. All that would be required is adding a function telling the program how to navigate the submodule directory to build circuits (either from QASM or Qiskit).
-
-TODO improve documentation
-
-```python
-run()
 ```
 
 ### Objective
