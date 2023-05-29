@@ -58,6 +58,13 @@ class Benchmark:
                     on circuit {circuit.name}"
             )
             transpiled_circuit = transpiler.run(circuit)
+            
+            if transpiled_circuit is None:
+                self.logger.debug(
+                    f"Skipping circuit {circuit.name} due to transpiler failure"
+                )
+                continue
+
             for metric in self.metrics:
                 self.logger.debug(
                     f"Calculating {metric.name} for circuit {circuit.name}"

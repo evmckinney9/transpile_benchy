@@ -19,6 +19,9 @@ class AbstractRunner(ABC):
     def __init__(self):
         """Initialize the runner."""
         self.pm = PassManager()
+        self.pre_process()
+        self.main_process()
+        self.post_process()
 
     @abstractmethod
     def pre_process(self):
@@ -46,7 +49,7 @@ class AbstractRunner(ABC):
 
     def run(self, circuit):
         """Run the transpiler on the circuit."""
-        circuit = self.pm(circuit)
+        circuit = self.pm.run(circuit)
         return circuit
 
 
@@ -55,8 +58,8 @@ class CustomPassManager(AbstractRunner, ABC):
 
     def __init__(self, coupling):
         """Initialize the runner."""
-        super().__init__()
         self.coupling = coupling
+        super().__init__()
 
     def pre_process(self):
         """Pre-process the circuit before running."""
