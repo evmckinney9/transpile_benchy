@@ -127,9 +127,6 @@ class Benchmark:
                 # Create figure for each metric
                 plt.figure(figsize=(10, 6))
 
-                #
-                print("here")
-
                 # Create a bar for each circuit
                 for i, (circuit_name, circuit_results) in enumerate(results.items()):
                     circuit_results = list(circuit_results.values())
