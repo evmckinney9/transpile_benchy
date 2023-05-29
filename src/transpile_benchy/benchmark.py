@@ -67,14 +67,22 @@ class Benchmark:
             )
         return transpiled_circuit
 
-    def _calculate_and_store_metric(self, metric, transpiled_circuit, circuit_name):
+    def _calculate_and_store_metric(
+        self, metric, transpiled_circuit, circuit_name, transpiler_name
+    ):
         """Calculate a metric and store it if it's the best result so far."""
         self.logger.debug(f"Calculating {metric.name} for circuit {circuit_name}")
         result = metric.calculate(transpiled_circuit)
-        if circuit_name not in self.results[metric.name] or metric.is_better(
-            self.results[metric.name][circuit_name], result
+
+        if circuit_name not in self.results[metric.name]:
+            self.results[metric.name][circuit_name] = {}
+
+        if transpiler_name not in self.results[metric.name][
+            circuit_name
+        ] or metric.is_better(
+            self.results[metric.name][circuit_name][transpiler_name], result
         ):
-            self.results[metric.name][circuit_name] = result
+            self.results[metric.name][circuit_name][transpiler_name] = result
 
     def run_single_circuit(self, circuit: QuantumCircuit):
         """Run a benchmark on a single circuit."""
@@ -87,8 +95,9 @@ class Benchmark:
                     continue
 
                 for metric in self.metrics:
+                    transpiler_name = transpiler.__class__.__name__
                     self._calculate_and_store_metric(
-                        metric, transpiled_circuit, circuit.name
+                        metric, transpiled_circuit, circuit.name, transpiler_name
                     )
 
     def run(self):
@@ -118,8 +127,12 @@ class Benchmark:
                 # Create figure for each metric
                 plt.figure(figsize=(10, 6))
 
+                #
+                print("here")
+
                 # Create a bar for each circuit
                 for i, (circuit_name, circuit_results) in enumerate(results.items()):
+                    circuit_results = list(circuit_results.values())
                     # Create a bar for each transpiler
                     for j, transpiler_result in enumerate(circuit_results):
                         plt.bar(
@@ -137,7 +150,11 @@ class Benchmark:
                 # Add labels, title, etc
                 plt.xlabel("Circuit")
                 plt.ylabel(metric_name)
-                plt.title(f"Transpiler {metric_name} Comparison")
+                # subtitle Best of N={self.num_runs} runs
+                plt.title(
+                    f"Transpiler {metric_name} Comparison,\
+                          Best of N={self.num_runs} runs"
+                )
 
                 max_fontsize = 10
                 min_fontsize = 4
