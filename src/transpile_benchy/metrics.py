@@ -18,6 +18,14 @@ class MetricInterface(ABC):
         """Calculate the metric from a given QuantumCircuit."""
         pass
 
+    def is_better(self, old_result: Any, new_result: Any) -> bool:
+        """Determine if a new result is better than the old result.
+
+        By default, smaller values are considered better. Override this
+        method for metrics where larger values are better.
+        """
+        return new_result < old_result
+
 
 class DepthMetric(MetricInterface):
     """Calculate the depth of a circuit."""
