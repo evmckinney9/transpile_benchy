@@ -4,7 +4,8 @@ The primary aim of this project is to simplify the process of testing new transp
 
 ![Tests](https://github.com/evmckinney9/transpile_benchy/actions/workflows/tests.yml/badge.svg?branch=main)
 ![Format Check](https://github.com/evmckinney9/transpile_benchy/actions/workflows/format-check.yml/badge.svg?branch=main)
-____
+
+---
 
 For a full example, see `src/notebooks/main.ipynb` The project is structured into four main parts. The first three are interfaces for the different components of the benchmarking suite. The fourth is the benchmarking class itself.
 
@@ -76,18 +77,17 @@ Use the base class `CustomPassManager`, and assign which Qiskit layout and routi
 
 ```python
 class Trivial_Basic(CustomPassManager):
-    def main_process(self, circuit):
+    def main_process(self):
         """Process the circuit."""
-        self.main_pm.append(
+        self.pm.append(
             [
-                TrivialLayout(coupling_map),
-                FullAncillaAllocation(coupling_map),
+                TrivialLayout(self.coupling),
+                FullAncillaAllocation(self.coupling),
                 EnlargeWithAncilla(),
                 ApplyLayout(),
-                BasicSwap(coupling_map),
+                BasicSwap(self.coupling),
             ]
         )
-        return self.main_pm.run(circuit)
 ```
 
 ### 4. `benchmark.py`:
