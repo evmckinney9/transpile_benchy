@@ -6,7 +6,15 @@ The primary aim of this project is to simplify the process of testing new transp
 ![Format Check](https://github.com/evmckinney9/transpile_benchy/actions/workflows/format-check.yml/badge.svg?branch=main)
 
 ---
+### Installation
 
+I am using submodules because the dependencies are not all packaged. Therefore, when cloning the repository, you will need to run the following commands to get the submodules:
+
+```bash
+git clone https://github.com/evmckinney9/transpile_benchy.git --recurse-submodules
+```
+
+### Usage
 For a full example, see `src/notebooks/main.ipynb` The project is structured into four main parts. The first three are interfaces for the different components of the benchmarking suite. The fourth is the benchmarking class itself.
 
 ### 1. `interface.py`:
@@ -95,14 +103,6 @@ class Trivial_Basic(CustomPassManager):
 This is the core benchmarking class `Benchmark`. It loads circuits from the submodules, applies the transpilers to them, calculates metrics on the transpiled circuits, and plots the results. The plots compare the metrics of the different transpilers on each circuit.
 
 ![initial_plot](images/transpile_benchy_Depth.svg)
-
-### Installation
-
-I am using submodules because the dependencies are not all packaged. Therefore, after cloning the repository, you will need to run the following commands to get the submodules:
-
-```bash
-git clone --recurse-submodules
-```
 
 ### Selected Benchmark Suite
 
