@@ -13,8 +13,9 @@ from qiskit import QuantumCircuit
 class MetricInterface(ABC):
     """Abstract class for a metric."""
 
+    @staticmethod
     @abstractmethod
-    def calculate(self, circuit: QuantumCircuit) -> Any:
+    def calculate(circuit: QuantumCircuit) -> Any:
         """Calculate the metric from a given QuantumCircuit."""
         pass
 
@@ -34,7 +35,8 @@ class DepthMetric(MetricInterface):
         """Initialize the metric."""
         self.name = "Depth"
 
-    def calculate(self, circuit: QuantumCircuit) -> float:
+    @staticmethod
+    def calculate(circuit: QuantumCircuit) -> float:
         """Calculate the depth of a circuit."""
         exclude_gates = [
             "measure",

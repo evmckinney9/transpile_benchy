@@ -48,6 +48,8 @@ class Benchmark:
 
         Return True if the circuit should be included in the benchmark.
         """
+        if "square_root" in circuit.name:
+            return False
         return circuit.depth() <= 500 and circuit.num_qubits <= 30
 
     def _try_transpilation(self, transpiler, circuit):
