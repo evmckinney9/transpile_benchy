@@ -38,6 +38,10 @@ class Benchmark:
         self.num_runs = num_runs
         self.logger = logger
 
+        # check that all the transpilers have different names
+        if len(set([t.name for t in self.transpilers])) != len(self.transpilers):
+            raise ValueError("Transpilers must have unique names")
+
     def load_quantum_circuits(self, submodule: SubmoduleInterface):
         """Load Quantum Circuits from a submodule."""
         for qc in submodule.get_quantum_circuits():
@@ -58,9 +62,8 @@ class Benchmark:
             self.logger.debug(f"Skipping circuit {circuit.name} due to filtering")
             return None
 
-        transpiler_name = transpiler.__class__.__name__
         self.logger.debug(
-            f"Running transpiler {transpiler_name} on circuit {circuit.name}"
+            f"Running transpiler {transpiler.name} on circuit {circuit.name}"
         )
         transpiled_circuit = transpiler.run(circuit)
         if transpiled_circuit is None:
@@ -79,11 +82,7 @@ class Benchmark:
         if circuit_name not in self.results[metric.name]:
             self.results[metric.name][circuit_name] = {}
 
-        if transpiler_name not in self.results[metric.name][
-            circuit_name
-        ] or metric.is_better(
-            self.results[metric.name][circuit_name][transpiler_name], result
-        ):
+        if transpiler_name not in self.results[metric.name][circuit_name] or metric.is_better(self.results[metric.name][circuit_name][transpiler_name], result):
             self.results[metric.name][circuit_name][transpiler_name] = result
 
     def run_single_circuit(self, circuit: QuantumCircuit):
@@ -97,9 +96,8 @@ class Benchmark:
                     continue
 
                 for metric in self.metrics:
-                    transpiler_name = transpiler.__class__.__name__
                     self._calculate_and_store_metric(
-                        metric, transpiled_circuit, circuit.name, transpiler_name
+                        metric, transpiled_circuit, circuit.name, transpiler.name
                     )
 
     def run(self):
@@ -141,7 +139,7 @@ class Benchmark:
                             color=colors[
                                 j % len(colors)
                             ],  # choose color based on transpiler index
-                            label=f"{self.transpilers[j].__class__.__name__}"
+                            label=f"{self.transpilers[j].name}"
                             if i == 0
                             else "",  # avoid duplicate labels
                         )

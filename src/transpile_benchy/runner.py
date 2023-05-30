@@ -16,8 +16,14 @@ from qiskit.transpiler.passes import Optimize1qGates, OptimizeSwapBeforeMeasure
 class AbstractRunner(ABC):
     """Abstract base class for a custom PassManager."""
 
-    def __init__(self):
-        """Initialize the runner."""
+    def __init__(self, name:str=None):
+        """Initialize the runner.
+        Args: optional string name,
+        if blank will be set to the class name
+        (use if you want to run multiple instances of the same runner
+        e.g. with varying coupling maps)
+        """
+        self.name = name or self.__class__.__name__
         self.pm = PassManager()
         self.pre_process()
         self.main_process()
