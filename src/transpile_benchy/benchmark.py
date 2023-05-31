@@ -33,10 +33,10 @@ class ResultMetrics:
 
     def add_result(self, result):
         self.values.append(result)
-        if self.best is None or result < self.best:
-            self.best = result
         if self.worst is None or not result < self.worst:
             self.worst = result
+        if self.best is None or result < self.best:
+            self.best = result
 
     @property
     def average(self):
@@ -53,7 +53,7 @@ class ResultContainer:
 
     def add_result(self, metric_name, circuit_name, transpiler_name, result):
         self.results[metric_name][circuit_name][transpiler_name].add_result(result)
-
+    
     def get_metrics(self, metric_name, circuit_name, transpiler_name):
         return self.results[metric_name][circuit_name][transpiler_name]
 
@@ -125,7 +125,7 @@ class Benchmark:
         self.logger.debug(f"Calculating {metric.name} for circuit {circuit_name}")
         result = metric.calculate(transpiled_circuit)
         self.results.add_result(metric.name, circuit_name, transpiler_name, result)
-
+        
     def run_single_circuit(self, circuit: QuantumCircuit):
         """Run a benchmark on a single circuit."""
         self.logger.debug(f"Running benchmark for circuit {circuit.name}")
@@ -211,7 +211,7 @@ class Benchmark:
                 plt.xlabel("Circuit")
                 plt.ylabel(metric_name)
                 plt.title(
-                    f"Transpiler {metric_name} Comparison, Best of N={self.num_runs} runs"
+                    f"Transpiler {metric_name} Comparison, Average of N={self.num_runs} runs"
                 )
 
                 max_fontsize = 10
