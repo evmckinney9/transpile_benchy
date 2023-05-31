@@ -5,7 +5,9 @@ calculates metrics on the transpiled circuits, and plots the results.
 The plots compare the metrics of the different transpilers on each
 circuit.
 """
+from collections import defaultdict
 from logging import Logger
+from statistics import mean, stdev
 from typing import List
 
 import matplotlib.pyplot as plt
@@ -16,6 +18,52 @@ from tqdm import tqdm
 from transpile_benchy.interface import SubmoduleInterface
 from transpile_benchy.metrics import MetricInterface
 from transpile_benchy.runner import AbstractRunner
+
+
+def nested_dict():
+    """Create a nested defaultdict."""
+    return defaultdict(lambda: defaultdict(ResultMetrics))
+
+
+class ResultMetrics:
+    def __init__(self):
+        self.values = []
+        self.best = None
+        self.worst = None
+
+    def add_result(self, result):
+        self.values.append(result)
+        if self.best is None or result < self.best:
+            self.best = result
+        if self.worst is None or not result < self.worst:
+            self.worst = result
+
+    @property
+    def average(self):
+        return mean(self.values)
+
+    @property
+    def stderr(self):
+        return stdev(self.values) if len(self.values) > 1 else 0
+
+
+class ResultContainer:
+    def __init__(self):
+        self.results = defaultdict(nested_dict)
+
+    def add_result(self, metric_name, circuit_name, transpiler_name, result):
+        self.results[metric_name][circuit_name][transpiler_name].add_result(result)
+
+    def get_metrics(self, metric_name, circuit_name, transpiler_name):
+        return self.results[metric_name][circuit_name][transpiler_name]
+
+    def __iter__(self):
+        """Iterator over the results in the form (metric_name, circuit_name,
+        transpiler_name, result_metrics)"""
+        for metric_name, circuit_dict in self.results.items():
+            for circuit_name, transpiler_dict in circuit_dict.items():
+                for transpiler_name, result_metrics in transpiler_dict.items():
+                    yield metric_name, circuit_name, transpiler_name, result_metrics
 
 
 class Benchmark:
@@ -34,7 +82,7 @@ class Benchmark:
         self.submodules = submodules
         self.metrics = metrics
         self.circuit_names = []
-        self.results = {metric.name: {} for metric in self.metrics}
+        self.results = ResultContainer()
         self.num_runs = num_runs
         self.logger = logger
 
@@ -44,8 +92,7 @@ class Benchmark:
 
     def load_quantum_circuits(self, submodule: SubmoduleInterface):
         """Load Quantum Circuits from a submodule."""
-        for qc in submodule.get_quantum_circuits():
-            yield qc
+        return submodule.get_quantum_circuits()
 
     def _filter_circuit(self, circuit: QuantumCircuit) -> bool:
         """Filter out unwanted circuits based on their properties.
@@ -75,15 +122,9 @@ class Benchmark:
     def _calculate_and_store_metric(
         self, metric, transpiled_circuit, circuit_name, transpiler_name
     ):
-        """Calculate a metric and store it if it's the best result so far."""
         self.logger.debug(f"Calculating {metric.name} for circuit {circuit_name}")
         result = metric.calculate(transpiled_circuit)
-
-        if circuit_name not in self.results[metric.name]:
-            self.results[metric.name][circuit_name] = {}
-
-        if transpiler_name not in self.results[metric.name][circuit_name] or metric.is_better(self.results[metric.name][circuit_name][transpiler_name], result):
-            self.results[metric.name][circuit_name][transpiler_name] = result
+        self.results.add_result(metric.name, circuit_name, transpiler_name, result)
 
     def run_single_circuit(self, circuit: QuantumCircuit):
         """Run a benchmark on a single circuit."""
@@ -113,55 +154,77 @@ class Benchmark:
             ):
                 self.run_single_circuit(circuit)
 
+    def plot_bars(self, metric_name, cmap, bar_width):
+        """Plot a bar for each circuit and each transpiler."""
+        transpiler_count = len(self.transpilers)
+        results = self.results.results[metric_name]
+
+        for i, (circuit_name, circuit_results) in enumerate(results.items()):
+            for j, transpiler in enumerate(self.transpilers):
+                result_metrics = self.results.get_metrics(
+                    metric_name, circuit_name, transpiler.name
+                )
+
+                # Plot the average
+                plt.bar(
+                    i * transpiler_count + j * bar_width,
+                    result_metrics.average,
+                    width=bar_width,
+                    color=cmap(j),
+                    yerr=result_metrics.stderr,
+                    label=f"{transpiler.name}" if i == 0 else "",
+                )
+
+                # Mark the best and worst results
+                plt.plot(
+                    [
+                        i * transpiler_count + j * bar_width,
+                        i * transpiler_count + j * bar_width,
+                    ],
+                    [result_metrics.best, result_metrics.worst],
+                    color="red",
+                    linewidth=1,
+                )
+
+                plt.scatter(
+                    [
+                        i * transpiler_count + j * bar_width,
+                        i * transpiler_count + j * bar_width,
+                    ],
+                    [result_metrics.best, result_metrics.worst],
+                    color="red",
+                    marker=".",
+                    s=10,
+                )
+
     def plot(self, save=False):
         """Plot benchmark results."""
-        with plt.style.context("seaborn-darkgrid"):
+        with plt.style.context(["ipynb", "colorsblind10"]):
             bar_width = 0.35
             transpiler_count = len(self.transpilers)
+            cmap = plt.cm.get_cmap("tab10", transpiler_count)
 
-            # Define color palette (add more colors if you have more than 2 transpilers)
-            colors = ["#1f77b4", "#ff7f0e"]
-
-            # Loop over metrics
-            for metric_name, results in self.results.items():
-                # Create figure for each metric
+            for metric_name in self.results.results.keys():
                 plt.figure(figsize=(10, 6))
+                self.plot_bars(metric_name, cmap, bar_width)
 
-                # Create a bar for each circuit
-                for i, (circuit_name, circuit_results) in enumerate(results.items()):
-                    circuit_results = list(circuit_results.values())
-                    # Create a bar for each transpiler
-                    for j, transpiler_result in enumerate(circuit_results):
-                        plt.bar(
-                            i * transpiler_count + j * bar_width,
-                            transpiler_result,
-                            width=bar_width,
-                            color=colors[
-                                j % len(colors)
-                            ],  # choose color based on transpiler index
-                            label=f"{self.transpilers[j].name}"
-                            if i == 0
-                            else "",  # avoid duplicate labels
-                        )
-
-                # Add labels, title, etc
                 plt.xlabel("Circuit")
                 plt.ylabel(metric_name)
-                # subtitle Best of N={self.num_runs} runs
                 plt.title(
-                    f"Transpiler {metric_name} Comparison,\
-                          Best of N={self.num_runs} runs"
+                    f"Transpiler {metric_name} Comparison, Best of N={self.num_runs} runs"
                 )
 
                 max_fontsize = 10
                 min_fontsize = 4
-                font_size = max(min(max_fontsize, 800 // len(results)), min_fontsize)
+                font_size = max(
+                    min(max_fontsize, 800 // len(self.results.results[metric_name])),
+                    min_fontsize,
+                )
 
-                # Set x-ticks labels once for each metric
                 plt.xticks(
-                    np.arange(len(results)) * transpiler_count
+                    np.arange(len(self.results.results[metric_name])) * transpiler_count
                     + bar_width * (transpiler_count - 1) / 2,
-                    results.keys(),
+                    self.results.results[metric_name].keys(),
                     rotation="vertical",
                     fontsize=font_size,
                 )
@@ -171,5 +234,4 @@ class Benchmark:
                 if save:
                     plt.savefig(f"transpile_benchy_{metric_name}.svg", dpi=300)
 
-                # Show the plot
                 plt.show()

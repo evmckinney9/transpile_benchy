@@ -100,7 +100,7 @@ class RedQueen(QASMInterface):
 
     def __init__(self):
         """Initialize RedQueen submodule."""
-        self.qasm_files = self._get_qasm_files("red-queen", self.size)
+        self.qasm_files = self._get_qasm_files("red-queen")
 
     @staticmethod
     def _get_qasm_files(directory: str) -> List[Path]:
