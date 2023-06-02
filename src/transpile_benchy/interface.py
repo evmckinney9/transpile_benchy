@@ -14,7 +14,7 @@ to spend time building all QuantumCircuits, only build them when needed.
 """
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Iterator, List, Callable
+from typing import Callable, Iterator, List
 
 # from qiskit.circuit.exceptions import QasmError
 from qiskit import QuantumCircuit
@@ -39,24 +39,26 @@ class SubmoduleInterface(ABC):
         """
         pass
 
+
 class QiskitInterface(SubmoduleInterface):
     """Abstract class for a submodule that has Qiskit functions."""
-    
+
     def __init__(self) -> None:
         self.qiskit_functions = self._get_qiskit_functions()
 
     def get_quantum_circuits(self) -> Iterator[QuantumCircuit]:
-            for qc in self.qiskit_functions:
-                yield qc()
+        for qc in self.qiskit_functions:
+            yield qc
 
     def estimate_circuit_count(self) -> int:
-            """Return an estimate of the total number of QuantumCircuits."""
-            return len(self.qiskit_functions)
-    
+        """Return an estimate of the total number of QuantumCircuits."""
+        return len(self.qiskit_functions)
+
     @abstractmethod
     def _get_qiskit_functions(self) -> List[Callable]:
         """Return a list of Qiskit functions."""
         raise NotImplementedError
+
 
 class QASMInterface(SubmoduleInterface):
     """Abstract class for a submodule that has QASM files."""

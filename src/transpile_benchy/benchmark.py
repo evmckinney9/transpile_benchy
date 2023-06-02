@@ -53,7 +53,7 @@ class ResultContainer:
 
     def add_result(self, metric_name, circuit_name, transpiler_name, result):
         self.results[metric_name][circuit_name][transpiler_name].add_result(result)
-    
+
     def get_metrics(self, metric_name, circuit_name, transpiler_name):
         return self.results[metric_name][circuit_name][transpiler_name]
 
@@ -101,7 +101,7 @@ class Benchmark:
         """
         if "square_root" in circuit.name:
             return False
-        return circuit.depth() <= 500 and circuit.num_qubits <= 30
+        return circuit.depth() <= 800 and circuit.num_qubits <= 36
 
     def _try_transpilation(self, transpiler, circuit):
         """Attempt to transpile, returning the transpiled circuit or None."""
@@ -125,7 +125,7 @@ class Benchmark:
         self.logger.debug(f"Calculating {metric.name} for circuit {circuit_name}")
         result = metric.calculate(transpiled_circuit)
         self.results.add_result(metric.name, circuit_name, transpiler_name, result)
-        
+
     def run_single_circuit(self, circuit: QuantumCircuit):
         """Run a benchmark on a single circuit."""
         self.logger.debug(f"Running benchmark for circuit {circuit.name}")
@@ -171,7 +171,7 @@ class Benchmark:
                     result_metrics.average,
                     width=bar_width,
                     color=cmap(j),
-                    yerr=result_metrics.stderr,
+                    # yerr=result_metrics.stderr,
                     label=f"{transpiler.name}" if i == 0 else "",
                 )
 
@@ -200,19 +200,20 @@ class Benchmark:
     def plot(self, save=False):
         """Plot benchmark results."""
         with plt.style.context(["ipynb", "colorsblind10"]):
-            bar_width = 0.35
+            bar_width = 0.5
             transpiler_count = len(self.transpilers)
             cmap = plt.cm.get_cmap("tab10", transpiler_count)
 
+            # set legend and axis font size
+            plt.rc("legend", fontsize=10)
+            plt.rc("axes", labelsize=10)
+
             for metric_name in self.results.results.keys():
-                plt.figure(figsize=(10, 6))
+                plt.figure(figsize=(3.5, 2.5))
                 self.plot_bars(metric_name, cmap, bar_width)
 
                 plt.xlabel("Circuit")
                 plt.ylabel(metric_name)
-                plt.title(
-                    f"Transpiler {metric_name} Comparison, Average of N={self.num_runs} runs"
-                )
 
                 max_fontsize = 10
                 min_fontsize = 4
@@ -226,6 +227,12 @@ class Benchmark:
                     + bar_width * (transpiler_count - 1) / 2,
                     self.results.results[metric_name].keys(),
                     rotation="vertical",
+                    fontsize=font_size,
+                )
+
+                # make the title font size smaller
+                plt.title(
+                    f"Transpiler {metric_name} Comparison\nAverage of N={self.num_runs} runs",
                     fontsize=font_size,
                 )
 
