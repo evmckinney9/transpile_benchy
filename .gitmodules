@@ -4,3 +4,6 @@
 [submodule "submodules/QASMBench"]
 	path = submodules/QASMBench
 	url = https://github.com/pnnl/QASMBench
+[submodule "submodules/MQTBench"]
+	path = submodules/MQTBench
+	url = https://github.com/cda-tum/MQTBench.git

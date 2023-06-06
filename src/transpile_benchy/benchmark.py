@@ -51,6 +51,20 @@ class ResultContainer:
     def __init__(self):
         self.results = defaultdict(nested_dict)
 
+    def __str__(self):
+        output = []
+        for metric_name, circuit_dict in self.results.items():
+            for circuit_name, transpiler_dict in circuit_dict.items():
+                for transpiler_name, result_metrics in transpiler_dict.items():
+                    output.append(
+                        f"Metric: {metric_name}, Circuit: {circuit_name}, Transpiler: {transpiler_name}"
+                    )
+                    output.append(f"  Best result: {result_metrics.best}")
+                    output.append(f"  Worst result: {result_metrics.worst}")
+                    output.append(f"  Average result: {result_metrics.average:.2f}")
+                    output.append(f"  Standard error: {result_metrics.stderr:.2f}")
+        return "\n".join(output)
+
     def add_result(self, metric_name, circuit_name, transpiler_name, result):
         self.results[metric_name][circuit_name][transpiler_name].add_result(result)
 
@@ -124,6 +138,7 @@ class Benchmark:
     ):
         self.logger.debug(f"Calculating {metric.name} for circuit {circuit_name}")
         result = metric.calculate(transpiled_circuit)
+        self.logger.info(f"Transpiler {transpiler_name}, {metric.name}: {result}")
         self.results.add_result(metric.name, circuit_name, transpiler_name, result)
 
     def run_single_circuit(self, circuit: QuantumCircuit):
