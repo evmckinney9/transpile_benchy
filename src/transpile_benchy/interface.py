@@ -182,30 +182,24 @@ class QiskitFunctionInterface(QiskitInterface):
         return list(self.function_factory.generate_functions().values())
 
 
-# class MQTBench(QiskitInterface):
-#     def __init__(self, num_qubits: int) -> None:
-#         self.num_qubits = num_qubits
-#         super().__init__()
+class MQTBench(SubmoduleInterface):
+    def __init__(self, num_qubits: int) -> None:
+        self.num_qubits = num_qubits
+        from mqt.bench.utils import get_supported_benchmarks
 
-#     def _get_qiskit_functions(self) -> List[Callable]:
-#         """Return a list of Qiskit functions."""
-#         prepath = Path(__file__).resolve().parent.parent.parent
-#         qiskit_functions = []
+        self.supported_benchmarks = get_supported_benchmarks()
 
-#         # List all python files in the directory and its subdirectories
-#         for file in prepath.rglob("submodules/MQTBench/src/mqt/bench/benchmarks/*.py"):
-#             # Get the module name by removing the suffix and replacing slashes with dots
-#             module_name = str(file.with_suffix('')).replace('/', '.')
+    def get_quantum_circuits(self) -> Iterator[QuantumCircuit]:
+        """Return an iterator over QuantumCircuits."""
+        from mqt.bench.benchmark_generator import get_benchmark
 
-#             # Import the module
-#             spec = importlib.util.spec_from_file_location(module_name, file)
-#             module = importlib.util.module_from_spec(spec)
-#             spec.loader.exec_module(module)
+        for bench_str in self.supported_benchmarks:
+            yield get_benchmark(
+                benchmark_name=bench_str,
+                level="alg",
+                circuit_size=self.num_qubits,
+            )
 
-#             # Add the function to the list if it exists
-#             try:
-#                 qiskit_functions.append(lambda: module.create_circuit(self.num_qubits))
-#             except AttributeError:
-#                 print(f"Warning: Module {module_name} does not have a create_circuit function.")
-
-#         return qiskit_functions
+    def estimate_circuit_count(self) -> int:
+        """Return an estimate of the total number of QuantumCircuits."""
+        return len(self.supported_benchmarks)

@@ -113,6 +113,8 @@ class Benchmark:
 
         Return True if the circuit should be included in the benchmark.
         """
+        if circuit.num_qubits < 2:
+            return False
         if "square_root" in circuit.name:
             return False
         return circuit.depth() <= 800 and circuit.num_qubits <= 36
