@@ -13,8 +13,12 @@ Also, we write using Iterator, for sake of memory efficiency, don't want
 to spend time building all QuantumCircuits, only build them when needed.
 """
 from abc import ABC, abstractmethod
+from fnmatch import fnmatch
 from pathlib import Path
-from typing import Callable, Dict, Iterator, List, Type
+from typing import Callable, Dict, Iterator, List, Optional, Type
+
+from mqt.bench.benchmark_generator import get_benchmark
+from mqt.bench.utils import get_supported_benchmarks
 
 # from qiskit.circuit.exceptions import QasmError
 from qiskit import QuantumCircuit
@@ -24,8 +28,17 @@ from qiskit.circuit import QuantumCircuit
 class SubmoduleInterface(ABC):
     """Abstract class for a submodule."""
 
-    @abstractmethod
+    def __init__(self, filter_str: Optional[str] = None) -> None:
+        self.filter_str = filter_str
+
     def get_quantum_circuits(self) -> Iterator[QuantumCircuit]:
+        """Return an iterator over filtered QuantumCircuits."""
+        for qc in self._get_raw_quantum_circuits():
+            if self.filter_str is None or fnmatch(qc.name, f"*{self.filter_str}*"):
+                yield qc
+
+    @abstractmethod
+    def _get_raw_quantum_circuits(self) -> Iterator[QuantumCircuit]:
         """Return an iterator over QuantumCircuits."""
         pass
 
@@ -44,10 +57,11 @@ class SubmoduleInterface(ABC):
 class QiskitInterface(SubmoduleInterface):
     """Abstract class for a submodule that has Qiskit functions."""
 
-    def __init__(self) -> None:
+    def __init__(self, filter_str: Optional[str] = None) -> None:
+        super().__init__(filter_str)
         self.qiskit_functions = self._get_qiskit_functions()
 
-    def get_quantum_circuits(self) -> Iterator[QuantumCircuit]:
+    def _get_raw_quantum_circuits(self) -> Iterator[QuantumCircuit]:
         for qc in self.qiskit_functions:
             yield qc
 
@@ -75,7 +89,7 @@ class QASMInterface(SubmoduleInterface):
             print(f"Failed to load {file}: {e}")
             return None
 
-    def get_quantum_circuits(self) -> Iterator[QuantumCircuit]:
+    def _get_raw_quantum_circuits(self) -> Iterator[QuantumCircuit]:
         """Return an iterator over QuantumCircuits."""
         for file in self.qasm_files:
             yield self._load_qasm_file(file)
@@ -183,22 +197,28 @@ class QiskitFunctionInterface(QiskitInterface):
 
 
 class MQTBench(SubmoduleInterface):
-    def __init__(self, num_qubits: int) -> None:
+    def __init__(self, num_qubits: int, filter_str: Optional[str] = None) -> None:
+        super().__init__(filter_str)
         self.num_qubits = num_qubits
-        from mqt.bench.utils import get_supported_benchmarks
-
         self.supported_benchmarks = get_supported_benchmarks()
 
-    def get_quantum_circuits(self) -> Iterator[QuantumCircuit]:
+    def _get_raw_quantum_circuits(self) -> Iterator[QuantumCircuit]:
         """Return an iterator over QuantumCircuits."""
-        from mqt.bench.benchmark_generator import get_benchmark
-
         for bench_str in self.supported_benchmarks:
-            yield get_benchmark(
-                benchmark_name=bench_str,
-                level="alg",
-                circuit_size=self.num_qubits,
-            )
+            if bench_str in ["shor", "groundstate"]:
+                continue  # NOTE way too big
+                # yield get_benchmark(
+                #     benchmark_name=bench_str,
+                #     level="alg",
+                #     circuit_size=self.num_qubits,
+                #     benchmark_instance_name="xsmall"
+                # )
+            else:
+                yield get_benchmark(
+                    benchmark_name=bench_str,
+                    level="alg",
+                    circuit_size=self.num_qubits,
+                )
 
     def estimate_circuit_count(self) -> int:
         """Return an estimate of the total number of QuantumCircuits."""

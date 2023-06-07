@@ -210,7 +210,7 @@ class Benchmark:
                     ],
                     [result_metrics.best, result_metrics.worst],
                     color="red",
-                    marker=".",
+                    marker="-",
                     s=10,
                 )
 
