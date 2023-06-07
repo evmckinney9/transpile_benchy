@@ -112,12 +112,14 @@ The main benchmark suite that we will use for this project is [QASMBench](https:
 
 This project is intended for our own research purposes and is not meant to be exhaustive. However, here are some other existing benchmark suites that are available in the field:
 
-- [RedQueen](https://github.com/Qiskit/red-queen/tree/main)
-- [MQTBench](https://github.com/cda-tum/MQTBench)
-- [Arline Benchmarks](https://github.com/ArlineQ/arline_benchmarks)
-- [QC-App-Oriented-Benchmarks](https://github.com/SRI-International/QC-App-Oriented-Benchmarks)
-- [QUEKO-benchmark](https://github.com/tbcdebug/QUEKO-benchmark)
-- [Supermarq](https://github.com/SupertechLabs/client-superstaq)
+Implemented:
+- [x] [QASMBench](https://github.com/pnnl/QASMBench)
+- [x] [RedQueen](https://github.com/Qiskit/red-queen/tree/main)
+- [x] [MQTBench](https://github.com/cda-tum/MQTBench)
+- [ ] [Arline Benchmarks](https://github.com/ArlineQ/arline_benchmarks)
+- [ ] [QC-App-Oriented-Benchmarks](https://github.com/SRI-International/QC-App-Oriented-Benchmarks)
+- [ ] [QUEKO-benchmark](https://github.com/tbcdebug/QUEKO-benchmark)
+- [ ] [Supermarq](https://github.com/SupertechLabs/client-superstaq)
 
 ### Further Reading
 
