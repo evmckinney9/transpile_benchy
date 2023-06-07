@@ -24,6 +24,9 @@ from mqt.bench.utils import get_supported_benchmarks
 from qiskit import QuantumCircuit
 from qiskit.circuit import QuantumCircuit
 
+### TODO FIXME, the filtering is so bad right now
+## refactor, so we filter at lower class levels
+
 
 class SubmoduleInterface(ABC):
     """Abstract class for a submodule."""
@@ -107,11 +110,12 @@ class QASMInterface(SubmoduleInterface):
 class QASMBench(QASMInterface):
     """Submodule for QASMBench circuits."""
 
-    def __init__(self, size: str):
+    def __init__(self, size: str, filter_str: Optional[str] = None):
         """Initialize QASMBench submodule.
 
         size: 'small', 'medium', or 'large'
         """
+        super().__init__(filter_str)
         self.size = size
         self.qasm_files = self._get_qasm_files("QASMBench", self.size)
 
@@ -133,8 +137,9 @@ class QASMBench(QASMInterface):
 class RedQueen(QASMInterface):
     """Submodule for RedQueen circuits."""
 
-    def __init__(self):
+    def __init__(self, filter_str: Optional[str] = None):
         """Initialize RedQueen submodule."""
+        super().__init__(filter_str)
         self.qasm_files = self._get_qasm_files("red-queen")
 
     @staticmethod
