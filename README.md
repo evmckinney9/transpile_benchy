@@ -120,6 +120,7 @@ Implemented:
 - [ ] [QC-App-Oriented-Benchmarks](https://github.com/SRI-International/QC-App-Oriented-Benchmarks)
 - [ ] [QUEKO-benchmark](https://github.com/tbcdebug/QUEKO-benchmark)
 - [ ] [Supermarq](https://github.com/SupertechLabs/client-superstaq)
+- [ ] [Revlib](https://www.revlib.org/index.php)
 
 ### Further Reading
 
