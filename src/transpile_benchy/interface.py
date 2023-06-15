@@ -126,8 +126,8 @@ class QASMBench(QASMInterface):
         qasm_files = prepath.glob(f"submodules/{directory}/{size}/**/*.qasm")
         # filter out the transpiled files
         qasm_files = filter(lambda file: "_transpiled" not in str(file), qasm_files)
-        # harcode, remove these files that are just way too big
-        too_big = ["vqe", "bwt"]
+        # harcode, remove these files that are just way too big or glithcing
+        too_big = ["vqe", "bwt", "ising_n26"]
         qasm_files = filter(
             lambda file: not any(x in str(file) for x in too_big), qasm_files
         )

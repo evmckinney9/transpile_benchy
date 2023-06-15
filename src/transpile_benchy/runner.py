@@ -54,6 +54,9 @@ class AbstractRunner(ABC):
         """
         pass
 
+    def append_pass(self, pass_instance):
+        self.pm.append(pass_instance)
+
     def run(self, circuit):
         """Run the transpiler on the circuit."""
         circuit = self.pm.run(circuit)

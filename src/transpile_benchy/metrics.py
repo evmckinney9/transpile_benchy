@@ -5,9 +5,9 @@ metric from a given QuantumCircuit. An example metric DepthMetric is
 provided.
 """
 from abc import ABC, abstractmethod
-from typing import Any
 
-from qiskit import QuantumCircuit
+from monodromy.depthPass import MonodromyDepth
+from qiskit.transpiler.basepasses import AnalysisPass
 
 
 class MetricInterface(ABC):
@@ -15,8 +15,8 @@ class MetricInterface(ABC):
 
     @staticmethod
     @abstractmethod
-    def calculate(circuit: QuantumCircuit) -> Any:
-        """Calculate the metric from a given QuantumCircuit."""
+    def get_pass() -> AnalysisPass:
+        """Return the pass associated with this metric."""
         pass
 
     def __lt__(self, other: "MetricInterface") -> bool:
@@ -25,35 +25,22 @@ class MetricInterface(ABC):
         By default, smaller values are considered better. Override this
         method for metrics where larger values are better.
         """
-        return self.calculate() < other.calculate()
+        return self.get_pass().property_set.get(
+            self.name, float("inf")
+        ) < other.get_pass().property_set.get(other.name, float("inf"))
 
 
 class DepthMetric(MetricInterface):
     """Calculate the depth of a circuit."""
 
-    def __init__(self):
+    def __init__(self, basis_gate):
         """Initialize the metric."""
-        self.name = "Depth"
+        self.name = "monodromy_depth"
+        self.transpiler_pass = MonodromyDepth(basis_gate=basis_gate)
 
-    @staticmethod
-    def calculate(circuit: QuantumCircuit) -> float:
-        """Calculate the depth of a circuit."""
-        exclude_gates = [
-            "measure",
-            "barrier",
-            "u3",
-            "u",
-            "ry",
-            "rz",
-            "rx",
-            "x",
-            "y",
-            "z",
-            "h",
-            "s",
-            "t",
-        ]
-        return circuit.depth(filter_function=lambda x: x[0].name not in exclude_gates)
+    def get_pass(self):
+        """Return the pass associated with this metric."""
+        return self.transpiler_pass
 
 
 # You can add more metrics here.

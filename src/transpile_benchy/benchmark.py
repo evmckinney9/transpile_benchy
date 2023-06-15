@@ -40,10 +40,14 @@ class ResultMetrics:
 
     @property
     def average(self):
+        if len(self.values) == 0:
+            return 0
         return mean(self.values)
 
     @property
     def stderr(self):
+        if len(self.values) == 0:
+            return 0
         return stdev(self.values) if len(self.values) > 1 else 0
 
 
@@ -104,6 +108,10 @@ class Benchmark:
         if len(set([t.name for t in self.transpilers])) != len(self.transpilers):
             raise ValueError("Transpilers must have unique names")
 
+        for metric in self.metrics:
+            for transpiler in self.transpilers:
+                transpiler.append_pass(metric.get_pass())
+
     def load_quantum_circuits(self, submodule: SubmoduleInterface):
         """Load Quantum Circuits from a submodule."""
         return submodule.get_quantum_circuits()
@@ -135,12 +143,15 @@ class Benchmark:
             )
         return transpiled_circuit
 
-    def _calculate_and_store_metric(
-        self, metric, transpiled_circuit, circuit_name, transpiler_name
-    ):
-        self.logger.debug(f"Calculating {metric.name} for circuit {circuit_name}")
-        result = metric.calculate(transpiled_circuit)
-        self.logger.info(f"Transpiler {transpiler_name}, {metric.name}: {result}")
+    def _calculate_and_store_metric(self, metric, circuit_name, transpiler_name):
+        # self.logger.debug(f"Retrieving {metric.name} for circuit {circuit_name}")
+        result = metric.get_pass().property_set.get(metric.name)
+        if result is None:
+            self.logger.warning(
+                f"No result found for {metric.name} on circuit {circuit_name} with transpiler {transpiler_name}"
+            )
+            return
+        self.logger.info(f"Transpiler {transpiler_name}, {circuit_name}: {result}")
         self.results.add_result(metric.name, circuit_name, transpiler_name, result)
 
     def run_single_circuit(self, circuit: QuantumCircuit):
@@ -155,7 +166,7 @@ class Benchmark:
 
                 for metric in self.metrics:
                     self._calculate_and_store_metric(
-                        metric, transpiled_circuit, circuit.name, transpiler.name
+                        metric, circuit.name, transpiler.name
                     )
 
     def run(self):
@@ -210,7 +221,7 @@ class Benchmark:
                     ],
                     [result_metrics.best, result_metrics.worst],
                     color="red",
-                    marker="-",
+                    marker=".",
                     s=10,
                 )
 
