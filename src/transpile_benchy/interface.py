@@ -155,14 +155,15 @@ class RedQueen(QASMInterface):
 class QiskitFunctionInterface(QiskitInterface):
     """Subclass of QiskitInterface with QuantumFunctionFactory integrated.
 
-    This class encapsulates the process of generating Qiskit functions of a given type (e.g., QFT or QuantumVolume)
-    for a specified set of qubit counts. The QuantumFunctionFactory nested class handles the generation of these
-    functions.
+    This class encapsulates the process of generating Qiskit functions
+    of a given type (e.g., QFT or QuantumVolume) for a specified set of
+    qubit counts. The QuantumFunctionFactory nested class handles the
+    generation of these functions.
 
-    Example usage:\\
-    num_qubits = [8, 12, 16, 20, 24, 28, 32, 36]\\
+    Example usage:\\ num_qubits = [8, 12, 16, 20, 24, 28, 32, 36]\\
     qiskit_functions_qft = QiskitFunctionInterface(QFT, num_qubits)\\
-    qiskit_functions_qv = QiskitFunctionInterface(QuantumVolume, num_qubits)
+    qiskit_functions_qv = QiskitFunctionInterface(QuantumVolume,
+    num_qubits)
     """
 
     class QuantumFunctionFactory:
@@ -180,7 +181,8 @@ class QiskitFunctionInterface(QiskitInterface):
         def generate_functions(self) -> Dict[str, Callable]:
             """Generate a dictionary of quantum functions."""
             return {
-                f"{self.function_type.__name__.lower()}_{n}": self._create_function(n)
+                # f"{self.function_type.__name__.lower()}_{n}": self._create_function(n)
+                f"{self.function_type.__name__}": self._create_function(n)
                 for n in self.num_qubits
             }
 
@@ -188,7 +190,8 @@ class QiskitFunctionInterface(QiskitInterface):
             """Create a quantum function with the specified number of
             qubits."""
             func = self.function_type(num_qubits)
-            func.name = f"{self.function_type.__name__.lower()}_{num_qubits}"
+            # func.name = f"{self.function_type.__name__.lower()}_{num_qubits}"
+            func.name = f"{self.function_type.__name__}"
             return func
 
     def __init__(self, function_type: Type[Callable], num_qubits: List[int]) -> None:

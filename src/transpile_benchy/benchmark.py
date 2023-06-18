@@ -7,7 +7,7 @@ circuit.
 """
 from collections import defaultdict
 from logging import Logger
-from statistics import mean, stdev
+from statistics import geometric_mean, stdev
 from typing import List
 
 import matplotlib.pyplot as plt
@@ -42,7 +42,7 @@ class ResultMetrics:
     def average(self):
         if len(self.values) == 0:
             return 0
-        return mean(self.values)
+        return geometric_mean(self.values)
 
     @property
     def stderr(self):
@@ -108,9 +108,13 @@ class Benchmark:
         if len(set([t.name for t in self.transpilers])) != len(self.transpilers):
             raise ValueError("Transpilers must have unique names")
 
-        for metric in self.metrics:
-            for transpiler in self.transpilers:
-                transpiler.append_pass(metric.get_pass())
+        # NOTE, breaking change -
+        # when monodromydepth needs different basis gates, we don't want to append
+        # the runner already has depth being calculated where variable basis gate is passed in
+
+        # for metric in self.metrics:
+        #     for transpiler in self.transpilers:
+        #         transpiler.append_pass(metric.get_pass())
 
     def load_quantum_circuits(self, submodule: SubmoduleInterface):
         """Load Quantum Circuits from a submodule."""
@@ -143,16 +147,16 @@ class Benchmark:
             )
         return transpiled_circuit
 
-    def _calculate_and_store_metric(self, metric, circuit_name, transpiler_name):
+    def _calculate_and_store_metric(self, metric, circuit_name, transpiler):
         # self.logger.debug(f"Retrieving {metric.name} for circuit {circuit_name}")
-        result = metric.get_pass().property_set.get(metric.name)
+        result = transpiler.pm.property_set.get(metric.name)
         if result is None:
             self.logger.warning(
-                f"No result found for {metric.name} on circuit {circuit_name} with transpiler {transpiler_name}"
+                f"No result found for {metric.name} on circuit {circuit_name} with transpiler {transpiler.name}"
             )
             return
-        self.logger.info(f"Transpiler {transpiler_name}, {circuit_name}: {result}")
-        self.results.add_result(metric.name, circuit_name, transpiler_name, result)
+        self.logger.info(f"Transpiler {transpiler.name}, {circuit_name}: {result}")
+        self.results.add_result(metric.name, circuit_name, transpiler.name, result)
 
     def run_single_circuit(self, circuit: QuantumCircuit):
         """Run a benchmark on a single circuit."""
@@ -165,9 +169,7 @@ class Benchmark:
                     continue
 
                 for metric in self.metrics:
-                    self._calculate_and_store_metric(
-                        metric, circuit.name, transpiler.name
-                    )
+                    self._calculate_and_store_metric(metric, circuit.name, transpiler)
 
     def run(self):
         """Run benchmark."""
@@ -203,31 +205,43 @@ class Benchmark:
                     label=f"{transpiler.name}" if i == 0 else "",
                 )
 
-                # Mark the best and worst results
-                plt.plot(
-                    [
-                        i * transpiler_count + j * bar_width,
-                        i * transpiler_count + j * bar_width,
-                    ],
-                    [result_metrics.best, result_metrics.worst],
-                    color="red",
-                    linewidth=1,
-                )
+                # # Mark the best and worst results
+                # plt.plot(
+                #     [
+                #         i * transpiler_count + j * bar_width,
+                #         i * transpiler_count + j * bar_width,
+                #     ],
+                #     [result_metrics.best, result_metrics.worst],
+                #     color="red",
+                #     linewidth=1,
+                # )
+                # plt.scatter(
+                #     [
+                #         i * transpiler_count + j * bar_width,
+                #         i * transpiler_count + j * bar_width,
+                #     ],
+                #     [result_metrics.best, result_metrics.worst],
+                #     color="red",
+                #     marker=".",
+                #     s=10,
+                # )
 
+                # Mark the best result
                 plt.scatter(
-                    [
-                        i * transpiler_count + j * bar_width,
-                        i * transpiler_count + j * bar_width,
-                    ],
-                    [result_metrics.best, result_metrics.worst],
-                    color="red",
-                    marker=".",
-                    s=10,
+                    i * transpiler_count + j * bar_width,
+                    result_metrics.best,
+                    color="black",
+                    marker="*",
+                    s=20,
+                    label="Best" if i == 0 and j == 0 else None,
                 )
 
     def plot(self, save=False):
         """Plot benchmark results."""
         with plt.style.context(["ipynb", "colorsblind10"]):
+            # LaTeX rendering
+            plt.rcParams["text.usetex"] = True
+
             bar_width = 0.5
             transpiler_count = len(self.transpilers)
             cmap = plt.cm.get_cmap("tab10", transpiler_count)
@@ -237,11 +251,17 @@ class Benchmark:
             plt.rc("axes", labelsize=10)
 
             for metric_name in self.results.results.keys():
+                # XXX temporary hard code renames
+                if metric_name == "monodromy_depth":
+                    pretty_name = "Average Depth"
+
                 plt.figure(figsize=(3.5, 2.5))
                 self.plot_bars(metric_name, cmap, bar_width)
 
-                plt.xlabel("Circuit")
-                plt.ylabel(metric_name)
+                plt.xlabel(
+                    "Two Local Full Entanglement Ansatz, 8Q Square-Lattice\n with varying 2Q Entangling Block"
+                )
+                plt.ylabel(pretty_name)
 
                 max_fontsize = 10
                 min_fontsize = 4
@@ -254,19 +274,23 @@ class Benchmark:
                     np.arange(len(self.results.results[metric_name])) * transpiler_count
                     + bar_width * (transpiler_count - 1) / 2,
                     self.results.results[metric_name].keys(),
-                    rotation="vertical",
+                    rotation=30,
+                    ha="right",
                     fontsize=font_size,
                 )
 
-                # make the title font size smaller
-                plt.title(
-                    f"Transpiler {metric_name} Comparison\nAverage of N={self.num_runs} runs",
-                    fontsize=font_size,
-                )
+                # Set the y-axis tick labels to use fixed point notation
+                plt.ticklabel_format(axis="y", style="plain")
 
-                plt.legend()
+                # # make the title font size smaller
+                # plt.title(
+                #     f"Transpiler {metric_name} Comparison\nAverage of N={self.num_runs} runs",
+                #     fontsize=font_size,
+                # )
+
+                plt.legend(bbox_to_anchor=(1.05, 1.0), loc="upper left")
 
                 if save:
-                    plt.savefig(f"transpile_benchy_{metric_name}.svg", dpi=300)
+                    plt.savefig(f"transpile_benchy_{pretty_name}.svg", dpi=300)
 
                 plt.show()
