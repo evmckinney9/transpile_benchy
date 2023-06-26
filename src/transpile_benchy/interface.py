@@ -12,8 +12,8 @@ which return QuantumCircuits. The latter is not yet implemented.
 Also, we write using Iterator, for sake of memory efficiency, don't want
 to spend time building all QuantumCircuits, only build them when needed.
 """
+import re
 from abc import ABC, abstractmethod
-from fnmatch import fnmatch
 from pathlib import Path
 from typing import Callable, Dict, Iterator, List, Optional, Type
 
@@ -23,7 +23,6 @@ from mqt.bench.utils import get_supported_benchmarks
 # from qiskit.circuit.exceptions import QasmError
 from qiskit import QuantumCircuit
 from qiskit.circuit import QuantumCircuit
-import re
 
 ### TODO FIXME, the filtering is so bad right now
 ## refactor, so we filter at lower class levels
@@ -88,6 +87,12 @@ class QASMInterface(SubmoduleInterface):
             for s in self.qasm_files
             if any(re.search(pattern, s.stem) for pattern in filter_list)
         ]
+
+    def get_all_possible_circuits(self):
+        circuit_names = []
+        for s in self.qasm_files:
+            circuit_names.append(s.stem)
+        return circuit_names
 
     @abstractmethod
     def _get_qasm_files(self, directory: str) -> List[Path]:
