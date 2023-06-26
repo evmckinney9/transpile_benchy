@@ -175,7 +175,7 @@ class Benchmark:
         """Run benchmark."""
         self.logger.info("Running benchmarks for circuits...")
         for submodule in self.submodules:
-            total = submodule.estimate_circuit_count()
+            total = submodule.circuit_count()
             circuits = self.load_quantum_circuits(submodule)
             for circuit in tqdm(
                 circuits,
