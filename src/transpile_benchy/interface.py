@@ -43,15 +43,13 @@ class SubmoduleInterface(ABC):
     def circuit_count(self) -> int:
         """Returns total number of QuantumCircuits post filtering."""
         return len(self.raw_circuits)
-    
 
 
 class QiskitInterface(SubmoduleInterface):
     """Abstract class for a submodule that has Qiskit functions."""
 
     def __init__(self) -> None:
-        self.raw_circuits= self._get_qiskit_functions()
-    
+        self.raw_circuits = self._get_qiskit_functions()
 
     @abstractmethod
     def _get_qiskit_functions(self) -> List[Callable]:
@@ -61,6 +59,7 @@ class QiskitInterface(SubmoduleInterface):
 
 class QASMInterface(SubmoduleInterface):
     """Abstract class for a submodule that has QASM files."""
+
     def __init__(self, filter_list) -> None:
         self.raw_circuits = self.get_filtered_files(filter_list)
 
@@ -79,12 +78,16 @@ class QASMInterface(SubmoduleInterface):
         """Return an iterator over QuantumCircuits."""
         for file in self.raw_circuits:
             yield self._load_qasm_file(file)
-    
+
     def get_filtered_files(self, filter_list) -> List:
         if filter_list is None or self.qasm_files is None:
-            return self.qasm_files 
-        
-        return [s for s in self.qasm_files if any(re.search(pattern, s.stem) for pattern in filter_list)]
+            return self.qasm_files
+
+        return [
+            s
+            for s in self.qasm_files
+            if any(re.search(pattern, s.stem) for pattern in filter_list)
+        ]
 
     @abstractmethod
     def _get_qasm_files(self, directory: str) -> List[Path]:
@@ -100,7 +103,7 @@ class QASMBench(QASMInterface):
 
         size: 'small', 'medium', or 'large'
         """
-        
+
         self.size = size
         self.qasm_files = self._get_qasm_files("QASMBench", self.size)
         super().__init__(filter_list)
@@ -113,9 +116,9 @@ class QASMBench(QASMInterface):
         # filter out the transpiled files
         qasm_files = filter(lambda file: "_transpiled" not in str(file), qasm_files)
         # harcode, remove these files that are just way too big or glithcing
-        too_big = ["vqe", "bwt", "ising_n26"]
+        manual_reject = ["vqe", "bwt", "ising_n26", "inverseqft_4"]
         qasm_files = filter(
-            lambda file: not any(x in str(file) for x in too_big), qasm_files
+            lambda file: not any(x in str(file) for x in manual_reject), qasm_files
         )
         return list(qasm_files)
 
@@ -190,7 +193,7 @@ class QiskitFunctionInterface(QiskitInterface):
         return list(self.function_factory.generate_functions().values())
 
 
-class MQTBench(SubmoduleInterface): #TODO needs filtering
+class MQTBench(SubmoduleInterface):  # TODO needs filtering
     def __init__(self, num_qubits: int) -> None:
         super().__init__()
         self.num_qubits = num_qubits

@@ -251,6 +251,10 @@ class Benchmark:
             plt.rc("axes", labelsize=10)
 
             for metric_name in self.results.results.keys():
+                # we are not plotting this
+                if metric_name == "accepted_subs":
+                    continue
+
                 # XXX temporary hard code renames
                 if metric_name == "monodromy_depth":
                     pretty_name = "Average Depth"
