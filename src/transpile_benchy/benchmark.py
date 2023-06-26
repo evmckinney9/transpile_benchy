@@ -26,10 +26,11 @@ def nested_dict():
 
 
 class ResultMetrics:
-    def __init__(self):
+    def __init__(self, use_gmean=False):
         self.values = []
         self.best = None
         self.worst = None
+        self.use_gmean = use_gmean
 
     def add_result(self, result):
         self.values.append(result)
@@ -40,6 +41,16 @@ class ResultMetrics:
 
     @property
     def average(self):
+        if self.use_gmean:
+            return self.gmean()
+        return self.mean()
+
+    def mean(self):
+        if len(self.values) == 0:
+            return 0
+        return sum(self.values) / len(self.values)
+
+    def gmean(self):
         if len(self.values) == 0:
             return 0
         return geometric_mean(self.values)
@@ -69,7 +80,16 @@ class ResultContainer:
                     output.append(f"  Standard error: {result_metrics.stderr:.2f}")
         return "\n".join(output)
 
+    # TODO fix this
     def add_result(self, metric_name, circuit_name, transpiler_name, result):
+        # Check the metric name and set the use_gmean attribute
+        if metric_name == "monodromy_depth":
+            self.results[metric_name][circuit_name][transpiler_name].use_gmean = True
+        elif metric_name == "accepted_subs":
+            self.results[metric_name][circuit_name][transpiler_name].use_gmean = False
+        else:
+            raise ValueError(f"Unknown metric name {metric_name}")
+
         self.results[metric_name][circuit_name][transpiler_name].add_result(result)
 
     def get_metrics(self, metric_name, circuit_name, transpiler_name):
