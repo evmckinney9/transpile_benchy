@@ -31,17 +31,28 @@ from qiskit.circuit import QuantumCircuit
 class SubmoduleInterface(ABC):
     """Abstract class for a submodule."""
 
-    def __init__(self, filter_str: Optional[str] = None) -> None:
-        self.filter_str = filter_str
-
+    def __init__(self, filter_list: Optional[list] = None) -> None:
+        self.filter_list = filter_list
+        
     def get_quantum_circuits(self) -> Iterator[QuantumCircuit]:
         """Return an iterator over filtered QuantumCircuits."""
-        for qc in self._get_raw_quantum_circuits():
-            if self.filter_str is None or fnmatch(qc.name, f"*{self.filter_str}*"):
-                yield qc
+        for qc in self._get_quantum_circuits():
+            yield qc
+
+    def get_filtered_files(self, files) -> List:
+        filtered_list = []
+
+        if self.filter_list is None or files is None:
+            return files
+        
+        for f in files:
+            if f.stem in self.filter_list:
+                filtered_list.append(f) 
+        
+        return filtered_list
 
     @abstractmethod
-    def _get_raw_quantum_circuits(self) -> Iterator[QuantumCircuit]:
+    def _get_quantum_circuits(self) -> Iterator[QuantumCircuit]:
         """Return an iterator over QuantumCircuits."""
         pass
 
@@ -55,6 +66,7 @@ class SubmoduleInterface(ABC):
         out.
         """
         pass
+    
 
 
 class QiskitInterface(SubmoduleInterface):
@@ -64,7 +76,7 @@ class QiskitInterface(SubmoduleInterface):
         super().__init__(filter_str)
         self.qiskit_functions = self._get_qiskit_functions()
 
-    def _get_raw_quantum_circuits(self) -> Iterator[QuantumCircuit]:
+    def _get_quantum_circuits(self) -> Iterator[QuantumCircuit]:
         for qc in self.qiskit_functions:
             yield qc
 
@@ -92,7 +104,7 @@ class QASMInterface(SubmoduleInterface):
             print(f"Failed to load {file}: {e}")
             return None
 
-    def _get_raw_quantum_circuits(self) -> Iterator[QuantumCircuit]:
+    def _get_quantum_circuits(self) -> Iterator[QuantumCircuit]:
         """Return an iterator over QuantumCircuits."""
         for file in self.qasm_files:
             yield self._load_qasm_file(file)
@@ -118,6 +130,7 @@ class QASMBench(QASMInterface):
         super().__init__(filter_str)
         self.size = size
         self.qasm_files = self._get_qasm_files("QASMBench", self.size)
+        self.qasm_files = self.get_filtered_files(self.qasm_files)
 
     @staticmethod
     def _get_qasm_files(directory: str, size: str) -> List[Path]:
@@ -141,6 +154,8 @@ class RedQueen(QASMInterface):
         """Initialize RedQueen submodule."""
         super().__init__(filter_str)
         self.qasm_files = self._get_qasm_files("red-queen")
+        self.qasm_files = self.get_filtered_files(self.qasm_files)
+
 
     @staticmethod
     def _get_qasm_files(directory: str) -> List[Path]:
