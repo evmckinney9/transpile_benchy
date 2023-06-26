@@ -225,7 +225,7 @@ class MQTBench(SubmoduleInterface):
         self.num_qubits = num_qubits
         self.supported_benchmarks = get_supported_benchmarks()
 
-    def _get_raw_quantum_circuits(self) -> Iterator[QuantumCircuit]:
+    def _get_quantum_circuits(self) -> Iterator[QuantumCircuit]:
         """Return an iterator over QuantumCircuits."""
         for bench_str in self.supported_benchmarks:
             if bench_str in ["shor", "groundstate"]:
