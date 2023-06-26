@@ -23,6 +23,7 @@ from mqt.bench.utils import get_supported_benchmarks
 # from qiskit.circuit.exceptions import QasmError
 from qiskit import QuantumCircuit
 from qiskit.circuit import QuantumCircuit
+import re
 
 ### TODO FIXME, the filtering is so bad right now
 ## refactor, so we filter at lower class levels
@@ -31,46 +32,26 @@ from qiskit.circuit import QuantumCircuit
 class SubmoduleInterface(ABC):
     """Abstract class for a submodule."""
 
-    def __init__(self, filter_str: Optional[str] = None) -> None:
-        self.filter_str = filter_str
+    def __init__(self) -> None:
+        self.raw_circuits = None
 
     def get_quantum_circuits(self) -> Iterator[QuantumCircuit]:
         """Return an iterator over filtered QuantumCircuits."""
-        for qc in self._get_raw_quantum_circuits():
-            if self.filter_str is None or fnmatch(qc.name, f"*{self.filter_str}*"):
-                yield qc
+        for qc in self._get_quantum_circuits():
+            yield qc
 
-    @abstractmethod
-    def _get_raw_quantum_circuits(self) -> Iterator[QuantumCircuit]:
-        """Return an iterator over QuantumCircuits."""
-        pass
-
-    @abstractmethod
-    def estimate_circuit_count(self) -> int:
-        """Return an estimate of the total number of QuantumCircuits.
-
-        Note that this assumes that generating the quantum circuits
-        doesn't significantly change the total number of circuits, which
-        might not be the case if some files fail to load or are filtered
-        out.
-        """
-        pass
+    def circuit_count(self) -> int:
+        """Returns total number of QuantumCircuits post filtering."""
+        return len(self.raw_circuits)
+    
 
 
 class QiskitInterface(SubmoduleInterface):
     """Abstract class for a submodule that has Qiskit functions."""
 
-    def __init__(self, filter_str: Optional[str] = None) -> None:
-        super().__init__(filter_str)
-        self.qiskit_functions = self._get_qiskit_functions()
-
-    def _get_raw_quantum_circuits(self) -> Iterator[QuantumCircuit]:
-        for qc in self.qiskit_functions:
-            yield qc
-
-    def estimate_circuit_count(self) -> int:
-        """Return an estimate of the total number of QuantumCircuits."""
-        return len(self.qiskit_functions)
+    def __init__(self) -> None:
+        self.raw_circuits= self._get_qiskit_functions()
+    
 
     @abstractmethod
     def _get_qiskit_functions(self) -> List[Callable]:
@@ -80,6 +61,8 @@ class QiskitInterface(SubmoduleInterface):
 
 class QASMInterface(SubmoduleInterface):
     """Abstract class for a submodule that has QASM files."""
+    def __init__(self, filter_list) -> None:
+        self.raw_circuits = self.get_filtered_files(filter_list)
 
     def _load_qasm_file(self, file: Path) -> QuantumCircuit:
         """Load a QASM file."""
@@ -92,14 +75,16 @@ class QASMInterface(SubmoduleInterface):
             print(f"Failed to load {file}: {e}")
             return None
 
-    def _get_raw_quantum_circuits(self) -> Iterator[QuantumCircuit]:
+    def _get_quantum_circuits(self) -> Iterator[QuantumCircuit]:
         """Return an iterator over QuantumCircuits."""
-        for file in self.qasm_files:
+        for file in self.raw_circuits:
             yield self._load_qasm_file(file)
-
-    def estimate_circuit_count(self) -> int:
-        """Return an estimate of the total number of QuantumCircuits."""
-        return len(self.qasm_files)
+    
+    def get_filtered_files(self, filter_list) -> List:
+        if filter_list is None or self.qasm_files is None:
+            return self.qasm_files 
+        
+        return [s for s in self.qasm_files if any(re.search(pattern, s.stem) for pattern in filter_list)]
 
     @abstractmethod
     def _get_qasm_files(self, directory: str) -> List[Path]:
@@ -110,14 +95,15 @@ class QASMInterface(SubmoduleInterface):
 class QASMBench(QASMInterface):
     """Submodule for QASMBench circuits."""
 
-    def __init__(self, size: str, filter_str: Optional[str] = None):
+    def __init__(self, size: str, filter_list: Optional[List[str]] = None):
         """Initialize QASMBench submodule.
 
         size: 'small', 'medium', or 'large'
         """
-        super().__init__(filter_str)
+        
         self.size = size
         self.qasm_files = self._get_qasm_files("QASMBench", self.size)
+        super().__init__(filter_list)
 
     @staticmethod
     def _get_qasm_files(directory: str, size: str) -> List[Path]:
@@ -139,8 +125,8 @@ class RedQueen(QASMInterface):
 
     def __init__(self, filter_str: Optional[str] = None):
         """Initialize RedQueen submodule."""
-        super().__init__(filter_str)
         self.qasm_files = self._get_qasm_files("red-queen")
+        super().__init__(filter_str)
 
     @staticmethod
     def _get_qasm_files(directory: str) -> List[Path]:
@@ -204,15 +190,15 @@ class QiskitFunctionInterface(QiskitInterface):
         return list(self.function_factory.generate_functions().values())
 
 
-class MQTBench(SubmoduleInterface):
-    def __init__(self, num_qubits: int, filter_str: Optional[str] = None) -> None:
-        super().__init__(filter_str)
+class MQTBench(SubmoduleInterface): #TODO needs filtering
+    def __init__(self, num_qubits: int) -> None:
+        super().__init__()
         self.num_qubits = num_qubits
-        self.supported_benchmarks = get_supported_benchmarks()
+        self.raw_circuits = get_supported_benchmarks()
 
-    def _get_raw_quantum_circuits(self) -> Iterator[QuantumCircuit]:
+    def _get_quantum_circuits(self) -> Iterator[QuantumCircuit]:
         """Return an iterator over QuantumCircuits."""
-        for bench_str in self.supported_benchmarks:
+        for bench_str in self.raw_circuits:
             if bench_str in ["shor", "groundstate"]:
                 continue  # NOTE way too big
                 # yield get_benchmark(
@@ -227,7 +213,3 @@ class MQTBench(SubmoduleInterface):
                     level="alg",
                     circuit_size=self.num_qubits,
                 )
-
-    def estimate_circuit_count(self) -> int:
-        """Return an estimate of the total number of QuantumCircuits."""
-        return len(self.supported_benchmarks)
