@@ -18,6 +18,8 @@ from tqdm import tqdm
 from transpile_benchy.interface import SubmoduleInterface
 from transpile_benchy.metrics import MetricInterface
 from transpile_benchy.runner import AbstractRunner
+from matplotlib.ticker import MaxNLocator
+from matplotlib.gridspec import GridSpec
 
 
 def nested_dict():
@@ -31,6 +33,9 @@ class ResultMetrics:
         self.best = None
         self.worst = None
         self.use_gmean = use_gmean
+
+    def __lt__(self, other):
+        return self.average < other.average
 
     def add_result(self, result):
         self.values.append(result)
@@ -169,7 +174,7 @@ class Benchmark:
 
     def _calculate_and_store_metric(self, metric, circuit_name, transpiler):
         # self.logger.debug(f"Retrieving {metric.name} for circuit {circuit_name}")
-        result = transpiler.pm.property_set.get(metric.name)
+        result = transpiler.pm.property_set.get(metric.name, 0)
         if result is None:
             self.logger.warning(
                 f"No result found for {metric.name} on circuit {circuit_name} with transpiler {transpiler.name}"
@@ -204,71 +209,51 @@ class Benchmark:
             ):
                 self.run_single_circuit(circuit)
 
-    def plot_bars(self, metric_name, cmap, bar_width):
+        # for some unknown reason have to clean out garbage keys from results
+        # I think this has to do with the default dict
+        # WARNING HORRIBLE HACK CODE
+        for metric in self.metrics:
+            for key in list(self.results.results[metric.name].keys()):
+                for transpiler in self.transpilers:
+                    if transpiler.name not in self.results.results[metric.name][key]:
+                        self.results.results[metric.name].pop(key)
+
+    def plot_bars(self, metric_name, cmap, bar_width, sorted_results, ax):
         """Plot a bar for each circuit and each transpiler."""
         transpiler_count = len(self.transpilers)
-        results = self.results.results[metric_name]
 
-        for i, (circuit_name, circuit_results) in enumerate(results.items()):
+        for i, (circuit_name, circuit_results) in enumerate(sorted_results):
             for j, transpiler in enumerate(self.transpilers):
                 result_metrics = self.results.get_metrics(
                     metric_name, circuit_name, transpiler.name
                 )
 
-                # Plot the average
-                plt.bar(
+                # Plot the average without label
+                ax.bar(
                     i * transpiler_count + j * bar_width,
                     result_metrics.average,
                     width=bar_width,
                     color=cmap(j),
-                    # yerr=result_metrics.stderr,
-                    label=f"{transpiler.name}" if i == 0 else "",
                 )
 
-                # # Mark the best and worst results
-                # plt.plot(
-                #     [
-                #         i * transpiler_count + j * bar_width,
-                #         i * transpiler_count + j * bar_width,
-                #     ],
-                #     [result_metrics.best, result_metrics.worst],
-                #     color="red",
-                #     linewidth=1,
-                # )
-                # plt.scatter(
-                #     [
-                #         i * transpiler_count + j * bar_width,
-                #         i * transpiler_count + j * bar_width,
-                #     ],
-                #     [result_metrics.best, result_metrics.worst],
-                #     color="red",
-                #     marker=".",
-                #     s=10,
-                # )
-
                 # Mark the best result
-                plt.scatter(
+                ax.scatter(
                     i * transpiler_count + j * bar_width,
                     result_metrics.best,
                     color="black",
                     marker="*",
-                    s=20,
-                    label="Best" if i == 0 and j == 0 else None,
+                    s=15,
                 )
 
-    def plot(self, save=False):
+    def plot(self, legend_show=True, save=False):
         """Plot benchmark results."""
         with plt.style.context(["ipynb", "colorsblind10"]):
             # LaTeX rendering
             plt.rcParams["text.usetex"] = True
 
-            bar_width = 0.5
+            bar_width = 0.8
             transpiler_count = len(self.transpilers)
             cmap = plt.cm.get_cmap("tab10", transpiler_count)
-
-            # set legend and axis font size
-            plt.rc("legend", fontsize=10)
-            plt.rc("axes", labelsize=10)
 
             for metric_name in self.results.results.keys():
                 # we are not plotting this
@@ -279,42 +264,78 @@ class Benchmark:
                 if metric_name == "monodromy_depth":
                     pretty_name = "Average Depth"
 
-                plt.figure(figsize=(3.5, 2.5))
-                self.plot_bars(metric_name, cmap, bar_width)
+                ref_size = 1.25  # assume need .4 for legend
+                if legend_show:
+                    fig, axs = plt.subplots(
+                        2,
+                        figsize=(
+                            3.5,
+                            ref_size + 0.4,
+                        ),  # 2 inch for plot + 1 inch for legend
+                        sharex=True,
+                        gridspec_kw={
+                            "height_ratios": [0.4, ref_size + 0.4],
+                            "hspace": 0.01,
+                        },  # 1:2 ratio for legend:plot
+                    )
+                    ax = axs[1]
+                else:
+                    fig, ax = plt.subplots(
+                        figsize=(3.5, ref_size)
+                    )  # Just 2 inch for the plot
 
-                plt.xlabel(
-                    "Two Local Full Entanglement Ansatz, 8Q Square-Lattice\n with varying 2Q Entangling Block"
+                # Sort the data here
+                sorted_results = sorted(
+                    list(self.results.results[metric_name].items()),
+                    key=lambda x: list(x[1].values())[0].average,
                 )
-                plt.ylabel(pretty_name)
+
+                self.plot_bars(metric_name, cmap, bar_width, sorted_results, ax)
+
+                ax.set_ylabel(pretty_name, fontsize=8)
 
                 max_fontsize = 10
-                min_fontsize = 4
+                min_fontsize = 8
                 font_size = max(
-                    min(max_fontsize, 800 // len(self.results.results[metric_name])),
+                    min(max_fontsize, 800 // len(sorted_results)),
                     min_fontsize,
                 )
 
-                plt.xticks(
-                    np.arange(len(self.results.results[metric_name])) * transpiler_count
+                # set legend and axis font size
+                plt.rc("legend", fontsize=8)
+                plt.rc("axes", labelsize=10)
+
+                ax.set_xticks(
+                    np.arange(len(sorted_results)) * transpiler_count
                     + bar_width * (transpiler_count - 1) / 2,
-                    self.results.results[metric_name].keys(),
+                )
+
+                ax.set_xticklabels(
+                    [x[0] for x in sorted_results],  # Use sorted keys
                     rotation=30,
                     ha="right",
                     fontsize=font_size,
                 )
 
+                # Ensure y-axis has at least two ticks
+                ax.yaxis.set_major_locator(MaxNLocator(nbins=3))
+
                 # Set the y-axis tick labels to use fixed point notation
-                plt.ticklabel_format(axis="y", style="plain")
+                ax.ticklabel_format(axis="y", style="plain")
 
-                # # make the title font size smaller
-                # plt.title(
-                #     f"Transpiler {metric_name} Comparison\nAverage of N={self.num_runs} runs",
-                #     fontsize=font_size,
-                # )
+                # Create the legend in the top plot
+                if legend_show:
+                    for j, transpiler in enumerate(self.transpilers):
+                        axs[0].bar(0, 0, color=cmap(j), label=f"{transpiler.name}")
 
-                plt.legend(bbox_to_anchor=(1.05, 1.0), loc="upper left")
+                    axs[0].legend(loc="center", ncol=2, fontsize=8, frameon=False)
+                    axs[0].axis("off")
 
                 if save:
-                    plt.savefig(f"transpile_benchy_{pretty_name}.svg", dpi=300)
+                    plt.savefig(
+                        f"transpile_benchy_{pretty_name}.svg",
+                        dpi=300,
+                        bbox_inches="tight",
+                    )
 
                 plt.show()

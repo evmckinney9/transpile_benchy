@@ -194,10 +194,23 @@ class QiskitFunctionInterface(QiskitInterface):
 
 
 class MQTBench(SubmoduleInterface):  # TODO needs filtering
-    def __init__(self, num_qubits: int) -> None:
+    def __init__(
+        self, num_qubits: int, filter_list: Optional[List[str]] = None
+    ) -> None:
         super().__init__()
         self.num_qubits = num_qubits
         self.raw_circuits = get_supported_benchmarks()
+        self.raw_circuits = self.get_filtered_files(filter_list)
+
+    def get_filtered_files(self, filter_list) -> List:
+        if filter_list is None or self.raw_circuits is None:
+            return self.raw_circuits
+
+        return [
+            s
+            for s in self.raw_circuits
+            if any(re.search(pattern, s) for pattern in filter_list)
+        ]
 
     def _get_quantum_circuits(self) -> Iterator[QuantumCircuit]:
         """Return an iterator over QuantumCircuits."""
