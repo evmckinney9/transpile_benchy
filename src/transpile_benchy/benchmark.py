@@ -12,14 +12,13 @@ from typing import List
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.ticker import MaxNLocator
 from qiskit import QuantumCircuit
 from tqdm import tqdm
 
 from transpile_benchy.interface import SubmoduleInterface
 from transpile_benchy.metrics import MetricInterface
 from transpile_benchy.runner import AbstractRunner
-from matplotlib.ticker import MaxNLocator
-from matplotlib.gridspec import GridSpec
 
 
 def nested_dict():
@@ -165,6 +164,7 @@ class Benchmark:
         self.logger.debug(
             f"Running transpiler {transpiler.name} on circuit {circuit.name}"
         )
+        transpiler.reset()
         transpiled_circuit = transpiler.run(circuit)
         if transpiled_circuit is None:
             self.logger.debug(
@@ -174,7 +174,7 @@ class Benchmark:
 
     def _calculate_and_store_metric(self, metric, circuit_name, transpiler):
         # self.logger.debug(f"Retrieving {metric.name} for circuit {circuit_name}")
-        result = transpiler.pm.property_set.get(metric.name, 0)
+        result = transpiler.pm.property_set.get(metric.name)
         if result is None:
             self.logger.warning(
                 f"No result found for {metric.name} on circuit {circuit_name} with transpiler {transpiler.name}"
@@ -242,7 +242,7 @@ class Benchmark:
                     result_metrics.best,
                     color="black",
                     marker="*",
-                    s=15,
+                    s=10,
                 )
 
     def plot(self, legend_show=True, save=False):
