@@ -81,6 +81,12 @@ class QASMInterface(SubmoduleInterface):
             if any(re.search(pattern, s.stem) for pattern in filter_list)
         ]
 
+    def get_all_possible_circuits(self):
+        circuit_names = []
+        for s in self.qasm_files:
+            circuit_names.append(s.stem)
+        return circuit_names
+
     @abstractmethod
     def _get_qasm_files(self, directory: str) -> List[Path]:
         """Return a list of QASM files."""
