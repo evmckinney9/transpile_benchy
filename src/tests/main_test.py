@@ -1,7 +1,6 @@
 """Main test runner."""
 
 from qiskit import QuantumCircuit
-from qiskit.circuit.library.standard_gates import CXGate
 from qiskit.transpiler import CouplingMap, PassManager
 from qiskit.transpiler.passes import (
     ApplyLayout,
@@ -13,10 +12,10 @@ from qiskit.transpiler.passes import (
     TrivialLayout,
 )
 
-from transpile_benchy.metrics import DepthMetric
 from transpile_benchy.runner import CustomPassManager
 
-depth_metric = DepthMetric(basis_gate=CXGate())
+# from transpile_benchy.metrics import DepthMetric
+# depth_metric = DepthMetric(basis_gate=CXGate())
 
 
 class Trivial_Basic(CustomPassManager):
@@ -29,7 +28,7 @@ class Trivial_Basic(CustomPassManager):
     def build_post_process(self):
         """Build the post-process PassManager."""
         pm = PassManager()
-        pm.append(depth_metric.get_pass())
+        # pm.append(depth_metric.get_pass())
         return pm
 
     def build_main_process(self):
@@ -57,7 +56,7 @@ class SABRE(CustomPassManager):
     def build_post_process(self):
         """Build the post-process PassManager."""
         pm = PassManager()
-        pm.append(depth_metric.get_pass())
+        # pm.append(depth_metric.get_pass())
         return pm
 
     def build_main_process(self):
