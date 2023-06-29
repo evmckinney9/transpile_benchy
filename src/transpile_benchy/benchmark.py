@@ -18,7 +18,7 @@ from tqdm import tqdm
 
 from transpile_benchy.interface import SubmoduleInterface
 from transpile_benchy.metrics import MetricInterface
-from transpile_benchy.runner import AbstractRunner
+from transpile_benchy.runner import CustomPassManager
 
 
 def nested_dict():
@@ -132,7 +132,7 @@ class Benchmark:
 
     def __init__(
         self,
-        transpilers: List[AbstractRunner],
+        transpilers: List[CustomPassManager],
         submodules: List[SubmoduleInterface],
         metrics: List[MetricInterface],
         logger: Logger = None,
@@ -183,7 +183,6 @@ class Benchmark:
         self.logger.debug(
             f"Running transpiler {transpiler.name} on circuit {circuit.name}"
         )
-        transpiler.reset()
         transpiled_circuit = transpiler.run(circuit)
         if transpiled_circuit is None:
             self.logger.debug(
@@ -194,7 +193,7 @@ class Benchmark:
     def _calculate_and_store_metric(self, metric, circuit_name, transpiler):
         """Calculate and store a metric."""
         # self.logger.debug(f"Retrieving {metric.name} for circuit {circuit_name}")
-        result = transpiler.pm.property_set.get(metric.name)
+        result = transpiler.property_set.get(metric.name)
         if result is None:
             self.logger.warning(
                 f"No result found for {metric.name} on circuit {circuit_name} \

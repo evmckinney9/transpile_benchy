@@ -10,86 +10,44 @@ the structure of the main processing method.
 from abc import ABC, abstractmethod
 
 from qiskit.transpiler import PassManager
-from qiskit.transpiler.passes import Optimize1qGates, OptimizeSwapBeforeMeasure
 
 
-class AbstractRunner(ABC):
-    """Abstract base class for a custom PassManager."""
+class CustomPassManager(ABC):
+    """Abstract class outlining the structure of a custom PassManager."""
 
-    def __init__(self, name: str = None):
-        """Initialize the runner.
-
-        Args: optional string name,
-        if blank will be set to the class name
-        (use if you want to run multiple instances of the same runner
-        e.g. with varying coupling maps)
-        """
-        self.name = name or self.__class__.__name__
-        self.pm = PassManager()
-        self.pre_process()
-        self.main_process()
-        self.post_process()
+    def __init__(self, **kwargs):
+        """Initialize the runner."""
+        self.name = None
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        self.name = self.name or self.__class__.__name__
+        self.property_set = {}
 
     @abstractmethod
-    def pre_process(self):
-        """Pre-process the circuit before running.
-
-        Append passes to self.pm here.
-        """
-        pass
+    def build_pre_process(self) -> PassManager:
+        """Build the pre-process PassManager."""
+        return PassManager()
 
     @abstractmethod
-    def main_process(self):
-        """Process the circuit.
-
-        Append passes to self.pm here.
-        """
-        pass
+    def build_main_process(self) -> PassManager:
+        """Build the main-process PassManager."""
+        return PassManager()
 
     @abstractmethod
-    def post_process(self):
-        """Post-process the circuit after running.
-
-        Append passes to self.pm here.
-        """
-        pass
-
-    def append_pass(self, pass_instance):
-        """Append a pass to the PassManager."""
-        self.pm.append(pass_instance)
+    def build_post_process(self) -> PassManager:
+        """Build the post-process PassManager."""
+        return PassManager()
 
     def run(self, circuit):
         """Run the transpiler on the circuit."""
-        circuit = self.pm.run(circuit)
+        self.property_set = {}  # reset property set
+        stages = [
+            self.build_pre_process(),
+            self.build_main_process(),
+            self.build_post_process(),
+        ]
+        for stage in stages:
+            stage.property_set = self.property_set
+            circuit = stage.run(circuit)
+            self.property_set.update(stage.property_set)
         return circuit
-
-
-class CustomPassManager(AbstractRunner, ABC):
-    """Abstract subclass for AbstractRunner."""
-
-    def __init__(self, coupling):
-        """Initialize the runner."""
-        self.coupling = coupling
-        super().__init__()
-
-    def pre_process(self):
-        """Pre-process the circuit before running."""
-        # self.pm.append(Unroller(["u", "cx", "iswap", "swap"]))
-        pass
-
-    def post_process(self):
-        """Post-process the circuit after running."""
-        self.pm.append(
-            [
-                OptimizeSwapBeforeMeasure(),
-                Optimize1qGates(basis=["u", "cx", "iswap", "swap"]),
-                # Collect2qBlocks(),
-                # ConsolidateBlocks(force_consolidate=True),
-                # RootiSwapWeylDecomposition(),
-            ]
-        )
-
-    @abstractmethod
-    def main_process(self):
-        """Abstract method for main processing."""
-        pass
