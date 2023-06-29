@@ -17,6 +17,8 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Callable, Dict, Iterator, List, Optional, Type
 
+# import revkit for revlib
+import revkit as rk  # FIXME fix revkit import so can import _to_iskit function
 from mqt.bench.benchmark_generator import get_benchmark
 from mqt.bench.utils import get_supported_benchmarks
 
@@ -233,3 +235,29 @@ class MQTBench(SubmoduleInterface):  # TODO needs filtering
                     level="alg",
                     circuit_size=self.num_qubits,
                 )
+
+
+class RevLib(SubmoduleInterface):
+    """Submodule for revlib."""
+
+    def __init__(self, filter_list: Optional[List[str]] = None) -> None:
+        """Initialize RevLib submodule."""
+        super().__init__()
+        self.raw_circuits = []  # FIXME find func in rv that returns circuits?
+        self.raw_circuits = self.get_filtered_files(filter_list)
+
+    def _get_quantum_circuits(self) -> Iterator[QuantumCircuit]:
+        """Return an iterator over QuantumCircuits."""
+        for revlib_circuit in self.raw_circuits:
+            yield rk._to_qiskit(circuit=revlib_circuit)
+
+    def get_filtered_files(self, filter_list) -> List:
+        """Return a list of filtered QASM files."""
+        if filter_list is None or self.raw_circuits is None:
+            return self.raw_circuits
+
+        return [
+            s
+            for s in self.raw_circuits
+            if any(re.search(pattern, s) for pattern in filter_list)
+        ]
