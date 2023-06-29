@@ -27,16 +27,21 @@ def nested_dict():
 
 
 class ResultMetrics:
+    """Class to store the results of a metric."""
+
     def __init__(self, use_gmean=False):
+        """Initialize the result metrics."""
         self.values = []
         self.best = None
         self.worst = None
         self.use_gmean = use_gmean
 
     def __lt__(self, other):
+        """Compare the average of the results."""
         return self.average < other.average
 
     def add_result(self, result):
+        """Add a result to the list of results."""
         self.values.append(result)
         if self.worst is None or not result < self.worst:
             self.worst = result
@@ -45,38 +50,48 @@ class ResultMetrics:
 
     @property
     def average(self):
+        """Return the average of the results."""
         if self.use_gmean:
             return self.gmean()
         return self.mean()
 
     def mean(self):
+        """Return the arithmetic mean of the results."""
         if len(self.values) == 0:
             return 0
         return sum(self.values) / len(self.values)
 
     def gmean(self):
+        """Return the geometric mean of the results."""
         if len(self.values) == 0:
             return 0
         return geometric_mean(self.values)
 
     @property
     def stderr(self):
+        """Return the standard error of the results."""
         if len(self.values) == 0:
             return 0
         return stdev(self.values) if len(self.values) > 1 else 0
 
 
 class ResultContainer:
+    """Class to store the results of the benchmark."""
+
     def __init__(self):
+        """Initialize the result container."""
         self.results = defaultdict(nested_dict)
 
     def __str__(self):
+        """Return a string representation of the results."""
         output = []
         for metric_name, circuit_dict in self.results.items():
             for circuit_name, transpiler_dict in circuit_dict.items():
                 for transpiler_name, result_metrics in transpiler_dict.items():
                     output.append(
-                        f"Metric: {metric_name}, Circuit: {circuit_name}, Transpiler: {transpiler_name}"
+                        f"Metric: {metric_name}, \
+                        Circuit: {circuit_name}, \
+                        Transpiler: {transpiler_name}"
                     )
                     output.append(f"  Best result: {result_metrics.best}")
                     output.append(f"  Worst result: {result_metrics.worst}")
@@ -86,6 +101,7 @@ class ResultContainer:
 
     # TODO fix this
     def add_result(self, metric_name, circuit_name, transpiler_name, result):
+        """Add a result to the container."""
         # Check the metric name and set the use_gmean attribute
         if metric_name == "monodromy_depth":
             self.results[metric_name][circuit_name][transpiler_name].use_gmean = True
@@ -97,11 +113,14 @@ class ResultContainer:
         self.results[metric_name][circuit_name][transpiler_name].add_result(result)
 
     def get_metrics(self, metric_name, circuit_name, transpiler_name):
+        """Return the metrics for a given metric, circuit, and transpiler."""
         return self.results[metric_name][circuit_name][transpiler_name]
 
     def __iter__(self):
-        """Iterator over the results in the form (metric_name, circuit_name,
-        transpiler_name, result_metrics)"""
+        """Iterate over the results.
+
+        (metric_name, circuit_name, transpiler_name, result_metrics)
+        """
         for metric_name, circuit_dict in self.results.items():
             for circuit_name, transpiler_dict in circuit_dict.items():
                 for transpiler_name, result_metrics in transpiler_dict.items():
@@ -134,7 +153,7 @@ class Benchmark:
 
         # NOTE, breaking change -
         # when monodromydepth needs different basis gates, we don't want to append
-        # the runner already has depth being calculated where variable basis gate is passed in
+        # the runner already has depth calculated when variable basis gate is passed in
 
         # for metric in self.metrics:
         #     for transpiler in self.transpilers:
@@ -173,11 +192,13 @@ class Benchmark:
         return transpiled_circuit
 
     def _calculate_and_store_metric(self, metric, circuit_name, transpiler):
+        """Calculate and store a metric."""
         # self.logger.debug(f"Retrieving {metric.name} for circuit {circuit_name}")
         result = transpiler.pm.property_set.get(metric.name)
         if result is None:
             self.logger.warning(
-                f"No result found for {metric.name} on circuit {circuit_name} with transpiler {transpiler.name}"
+                f"No result found for {metric.name} on circuit {circuit_name} \
+                    with transpiler {transpiler.name}"
             )
             return
         self.logger.info(f"Transpiler {transpiler.name}, {circuit_name}: {result}")

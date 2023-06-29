@@ -55,6 +55,7 @@ class AbstractRunner(ABC):
         pass
 
     def append_pass(self, pass_instance):
+        """Append a pass to the PassManager."""
         self.pm.append(pass_instance)
 
     def run(self, circuit):
