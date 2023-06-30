@@ -12,7 +12,7 @@ from qiskit.transpiler.passes import (
     TrivialLayout,
 )
 
-from transpile_benchy.runner import CustomPassManager
+from transpile_benchy.passmanagers.abc_runner import CustomPassManager
 
 # from transpile_benchy.metrics import DepthMetric
 # depth_metric = DepthMetric(basis_gate=CXGate())
@@ -21,17 +21,17 @@ from transpile_benchy.runner import CustomPassManager
 class Trivial_Basic(CustomPassManager):
     """Custom pass manager."""
 
-    def build_pre_process(self):
+    def build_pre_stage(self):
         """Build the pre-process PassManager."""
-        return super().build_pre_process()
+        return super().build_pre_stage()
 
-    def build_post_process(self):
+    def build_post_stage(self):
         """Build the post-process PassManager."""
         pm = PassManager()
         # pm.append(depth_metric.get_pass())
         return pm
 
-    def build_main_process(self):
+    def build_main_stage(self):
         """Process the circuit."""
         pm = PassManager()
         pm.append(
@@ -49,17 +49,17 @@ class Trivial_Basic(CustomPassManager):
 class SABRE(CustomPassManager):
     """Custom pass manager."""
 
-    def build_pre_process(self):
+    def build_pre_stage(self):
         """Build the pre-process PassManager."""
-        return super().build_pre_process()
+        return super().build_pre_stage()
 
-    def build_post_process(self):
+    def build_post_stage(self):
         """Build the post-process PassManager."""
         pm = PassManager()
         # pm.append(depth_metric.get_pass())
         return pm
 
-    def build_main_process(self):
+    def build_main_stage(self):
         """Process the circuit."""
         pm = PassManager()
         pm.append(

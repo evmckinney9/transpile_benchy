@@ -11,6 +11,8 @@ from abc import ABC, abstractmethod
 
 from qiskit.transpiler import PassManager
 
+from transpile_benchy.metrics.abc_metrics import MetricInterface
+
 
 class CustomPassManager(ABC):
     """Abstract class outlining the structure of a custom PassManager."""
@@ -22,19 +24,28 @@ class CustomPassManager(ABC):
             setattr(self, key, value)
         self.name = self.name or self.__class__.__name__
         self.property_set = {}
+        self.metric_passes = []
+
+    def append_metric_pass(self, metric: MetricInterface):
+        """Append a analysis pass, using transpiler-specific configuration."""
+        self.metric_passes.append(metric.get_pass(self))
+
+    def build_metric_stage(self) -> PassManager:
+        """Build a PassManager for metric analysis."""
+        return PassManager(self.metric_passes)
 
     @abstractmethod
-    def build_pre_process(self) -> PassManager:
+    def build_pre_stage(self) -> PassManager:
         """Build the pre-process PassManager."""
         return PassManager()
 
     @abstractmethod
-    def build_main_process(self) -> PassManager:
+    def build_main_stage(self) -> PassManager:
         """Build the main-process PassManager."""
         return PassManager()
 
     @abstractmethod
-    def build_post_process(self) -> PassManager:
+    def build_post_stage(self) -> PassManager:
         """Build the post-process PassManager."""
         return PassManager()
 
@@ -42,9 +53,10 @@ class CustomPassManager(ABC):
         """Run the transpiler on the circuit."""
         self.property_set = {}  # reset property set
         stages = [
-            self.build_pre_process(),
-            self.build_main_process(),
-            self.build_post_process(),
+            self.build_pre_stage(),
+            self.build_main_stage(),
+            self.build_post_stage(),
+            self.build_metric_stage(),
         ]
         for stage in stages:
             stage.property_set = self.property_set
