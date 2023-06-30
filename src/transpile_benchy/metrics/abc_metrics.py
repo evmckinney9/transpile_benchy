@@ -63,7 +63,7 @@ class MetricInterface(ABC):
         for attribute in self.required_attributes:
             if not hasattr(transpiler, attribute):
                 raise ValueError(
-                    f"Transpiler must have '{attribute}' to instantiate this metric."
+                    f"Transpiler missing '{attribute}' attr to instantiate {self.name}."
                 )
 
         return self._get_pass(transpiler)
