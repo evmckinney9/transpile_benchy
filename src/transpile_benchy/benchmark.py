@@ -97,7 +97,7 @@ class Benchmark:
         metric: MetricInterface,
         transpiler_1: CustomPassManager,
         transpiler_2: CustomPassManager,
-    ):
+    ) -> dict:
         """Calculate statistics for a specific metric and two transpilers.
 
         Args:
@@ -109,7 +109,7 @@ class Benchmark:
                 - 'average_change': Average change of metric compared to baseline (%).
                 - 'best_circuit': The circuit that had the best improvement.
                 - 'worst_circuit': The circuit that had the worst improvement.
-                - 'percent_improvements': Dict mapping circuit names to % improvements.
+                - 'percent_changes': Dict mapping circuit names to % changes.
         """
         # Error checking
         try:
@@ -122,36 +122,36 @@ class Benchmark:
         circuit_results_1 = metric.saved_results[transpiler_1.name]
         circuit_results_2 = metric.saved_results[transpiler_2.name]
 
-        improvement_percentages = []
-        percent_improvements = {}
+        change_percentages = []
+        percent_changes = {}
 
         for circuit_name, result_1 in circuit_results_1.items():
             if circuit_name in circuit_results_2:
                 result_2 = circuit_results_2[circuit_name]
-                improvement_percentage = (
+                change_percentage = (
                     (result_2.average - result_1.average) / result_1.average
                 ) * 100
-                improvement_percentages.append(improvement_percentage)
-                percent_improvements[circuit_name] = improvement_percentage
+                change_percentages.append(change_percentage)
+                percent_changes[circuit_name] = change_percentage
 
-        average_change = sum(improvement_percentages) / len(improvement_percentages)
+        average_change = sum(change_percentages) / len(change_percentages)
 
-        best_circuit = max(
-            circuit_results_1.keys(),
-            key=lambda circuit: circuit_results_2[circuit].average
-            - circuit_results_1[circuit].average,
-        )
-        worst_circuit = min(
-            circuit_results_1.keys(),
-            key=lambda circuit: circuit_results_2[circuit].average
-            - circuit_results_1[circuit].average,
-        )
+        if metric.is_lower_better:
+            # If lower is better, the best circuit has the most negative change
+            best_circuit = min(percent_changes, key=percent_changes.get)
+            # The worst circuit has the least negative (or most positive) change
+            worst_circuit = max(percent_changes, key=percent_changes.get)
+        else:
+            # If higher is better, the best circuit has the most positive change
+            best_circuit = max(percent_changes, key=percent_changes.get)
+            # The worst circuit has the least positive (or most negative) change
+            worst_circuit = min(percent_changes, key=percent_changes.get)
 
         return {
             "average_change": average_change,
             "best_circuit": best_circuit,
             "worst_circuit": worst_circuit,
-            "percent_improvements": percent_improvements,
+            "percent_changes": percent_changes,
         }
 
     # Below methods used for pretty printing results
@@ -198,8 +198,8 @@ class Benchmark:
                 output.append(f"\n  Metric: {metric_name}")
                 current_metric = metric_name
             output.append(
-                f"  Circuit: {circuit_name}, \
-                    Mean result: {mean_result:.3f}, \
+                f"  Circuit: {circuit_name:<20} \
+                    Mean result: {mean_result:<10.3f} \
                     Trials: {trials}"
             )
         return "\n".join(output)
