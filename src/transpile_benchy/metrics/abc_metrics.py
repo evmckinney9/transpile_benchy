@@ -27,6 +27,10 @@ class Result:
     metric: "MetricInterface"
     trials: List = field(default_factory=list)
 
+    def __repr__(self) -> str:
+        """Pretty print the result."""
+        return f"Result({self.metric.name}, {self.average})"
+
     def add_trial(self, value):
         """Add a trial result."""
         self.trials.append(value)
@@ -43,14 +47,15 @@ class Result:
     def best(self):
         """Return the best trial result.
 
-        NOTE: convention is that lower is better.
+        If is_lower_better is True for the metric, lower values are
+        considered better.
         """
-        return min(self.trials, key=self.metric.compare_results)
+        return min(self.trials) if self.metric.is_lower_better else max(self.trials)
 
     @property
     def worst(self):
         """Return the worst trial result."""
-        return max(self.trials, key=self.metric.compare_results)
+        return max(self.trials) if self.metric.is_lower_better else min(self.trials)
 
 
 class MetricInterface(ABC):
@@ -58,11 +63,13 @@ class MetricInterface(ABC):
 
     required_attributes = []  # Each subclass can override this list
 
-    def __init__(self, name: str):
+    def __init__(self, name: str, pretty_name: str = None):
         """Initialize the result metrics."""
         self.name = name
-        self.clear_saved_results()
+        self.pretty_name = pretty_name or name
+        self.is_lower_better = True
         self.use_geometric_mean = False
+        self.clear_saved_results()
 
     def get_pass(self, transpiler) -> AnalysisPass:
         """Return the pass associated with this metric."""
@@ -102,19 +109,28 @@ class MetricInterface(ABC):
         """Get a result from the saved results."""
         return self.saved_results[transpiler.name][circuit_name]
 
+    def prepare_plot_data(self):
+        """Sort and parse the result dictionary for plotting."""
+        result_dict = {}
+
+        for transpiler_name, results_by_circuit in self.saved_results.items():
+            for circuit_name, result in results_by_circuit.items():
+                if circuit_name not in result_dict:
+                    result_dict[circuit_name] = []
+                result_dict[circuit_name].append((transpiler_name, result))
+
+        # Sort by the average result of the first transpiler
+        sorted_results = sorted(
+            result_dict.items(),
+            key=lambda x: x[1][0][1].average,
+        )
+
+        return sorted_results
+
     @abstractmethod
     def _get_pass(self, transpiler):
         """Return the pass associated with this metric."""
         raise NotImplementedError
-
-    # optionally override this method
-    def compare_results(self, result1, result2):
-        """Compare two results.
-
-        Default assumes lower is better. Return true if result1 is
-        better than result2
-        """
-        return result1 < result2
 
 
 class DoNothing(AnalysisPass):

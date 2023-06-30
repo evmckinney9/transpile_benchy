@@ -156,6 +156,8 @@ class Benchmark:
 
     # Below methods used for pretty printing results
     # print(benchmark) will print a table of results
+    # FIXME, the following methods are redundant and should be consolidated
+    # Metric.prepare_plot_data
 
     def __iter__(self):
         """Iterate over the results.
