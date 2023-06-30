@@ -39,12 +39,18 @@ class Result:
         else:
             return mean(self.trials)
 
-    def __lt__(self, other):
-        """Metric is less than if its average is "better" than the other's."""
-        if isinstance(other, self.__class__):
-            return self.metric.compare_results(self.average, other.average)
-        else:
-            raise TypeError("Comparisons are only possible between two Result objects.")
+    @property
+    def best(self):
+        """Return the best trial result.
+
+        NOTE: convention is that lower is better.
+        """
+        return min(self.trials, key=self.metric.compare_results)
+
+    @property
+    def worst(self):
+        """Return the worst trial result."""
+        return max(self.trials, key=self.metric.compare_results)
 
 
 class MetricInterface(ABC):
@@ -52,8 +58,9 @@ class MetricInterface(ABC):
 
     required_attributes = []  # Each subclass can override this list
 
-    def __init__(self):
+    def __init__(self, name: str):
         """Initialize the result metrics."""
+        self.name = name
         self.clear_saved_results()
         self.use_geometric_mean = False
 
@@ -100,10 +107,23 @@ class MetricInterface(ABC):
         """Return the pass associated with this metric."""
         raise NotImplementedError
 
-    @abstractmethod
+    # optionally override this method
     def compare_results(self, result1, result2):
         """Compare two results.
 
-        Return true if result1 is better than result2
+        Default assumes lower is better. Return true if result1 is
+        better than result2
         """
-        raise NotImplementedError
+        return result1 < result2
+
+
+class DoNothing(AnalysisPass):
+    """A pass that does nothing.
+
+    This is a workaround for metrics that do not require a pass. For
+    example, if some other pass already calculates the metric.
+    """
+
+    def run(self, dag):
+        """Do nothing."""
+        return dag

@@ -92,11 +92,112 @@ class Benchmark:
             ):
                 self.run_single_circuit(circuit)
 
-    # FIXME
+    def summary_statistics(
+        self,
+        metric: MetricInterface,
+        transpiler_1: CustomPassManager,
+        transpiler_2: CustomPassManager,
+    ):
+        """Calculate statistics for a specific metric and two transpilers.
+
+        Args:
+            metric (MetricInterface): The metric to calculate statistics for.
+            transpiler_1 (CustomPassManager): The baseline transpiler.
+            transpiler_2 (CustomPassManager): The comparison transpiler.
+        Returns:
+            dict: A dictionary containing the summary statistics.
+                - 'average_change': Average change of metric compared to baseline (%).
+                - 'best_circuit': The circuit that had the best improvement.
+                - 'worst_circuit': The circuit that had the worst improvement.
+                - 'percent_improvements': Dict mapping circuit names to % improvements.
+        """
+        # Error checking
+        try:
+            assert metric in self.metrics
+            assert transpiler_1 in self.transpilers and transpiler_2 in self.transpilers
+        except AssertionError:
+            raise ValueError("Invalid metric or transpiler")
+
+        # Get the results as Dict[circuit_name, MetricResult]
+        circuit_results_1 = metric.saved_results[transpiler_1.name]
+        circuit_results_2 = metric.saved_results[transpiler_2.name]
+
+        improvement_percentages = []
+        percent_improvements = {}
+
+        for circuit_name, result_1 in circuit_results_1.items():
+            if circuit_name in circuit_results_2:
+                result_2 = circuit_results_2[circuit_name]
+                improvement_percentage = (
+                    (result_2.average - result_1.average) / result_1.average
+                ) * 100
+                improvement_percentages.append(improvement_percentage)
+                percent_improvements[circuit_name] = improvement_percentage
+
+        average_change = sum(improvement_percentages) / len(improvement_percentages)
+
+        best_circuit = max(
+            circuit_results_1.keys(),
+            key=lambda circuit: circuit_results_2[circuit].average
+            - circuit_results_1[circuit].average,
+        )
+        worst_circuit = min(
+            circuit_results_1.keys(),
+            key=lambda circuit: circuit_results_2[circuit].average
+            - circuit_results_1[circuit].average,
+        )
+
+        return {
+            "average_change": average_change,
+            "best_circuit": best_circuit,
+            "worst_circuit": worst_circuit,
+            "percent_improvements": percent_improvements,
+        }
+
+    # Below methods used for pretty printing results
+    # print(benchmark) will print a table of results
+
     def __iter__(self):
         """Iterate over the results.
 
-        (metric_name, circuit_name, transpiler_name, result_metrics)?
+        Yields tuples in the format:
+        (metric_name, transpiler_name, circuit_name, mean_result, trials)
         """
         for metric in self.metrics:
-            yield metric.name, metric.saved_results
+            for transpiler_name, results_by_circuit in metric.saved_results.items():
+                for circuit_name, result in results_by_circuit.items():
+                    yield (
+                        metric.name,
+                        transpiler_name,
+                        circuit_name,
+                        result.average,
+                        result.trials,
+                    )
+
+    def __str__(self):
+        """Return a string representation of the benchmark results."""
+        output = []
+        sorted_results = sorted(
+            self, key=lambda x: (x[1], x[0], x[2])
+        )  # Sort by transpiler, then by metric, then by circuit
+        current_transpiler = ""
+        current_metric = ""
+        for (
+            metric_name,
+            transpiler_name,
+            circuit_name,
+            mean_result,
+            trials,
+        ) in sorted_results:
+            if transpiler_name != current_transpiler:
+                output.append(f"\nTranspiler: {transpiler_name}")
+                current_transpiler = transpiler_name
+            if metric_name != current_metric:
+                output.append(f"\n  Metric: {metric_name}")
+                current_metric = metric_name
+            output.append(
+                f"  Circuit: {circuit_name}, \
+                    Mean result: {mean_result:.3f}, \
+                    Trials: {trials}"
+            )
+        return "\n".join(output)

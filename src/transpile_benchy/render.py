@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.ticker import MaxNLocator
 
+from transpile_benchy.benchmark import Benchmark
+
 
 def _plot_bars(self, metric_name, cmap, bar_width, sorted_results, ax):
     """Plot a bar for each circuit and each transpiler."""
@@ -33,17 +35,17 @@ def _plot_bars(self, metric_name, cmap, bar_width, sorted_results, ax):
             )
 
 
-def plot(self, legend_show=True, save=False):
+def plot(benchmark: Benchmark, legend_show=True, save=False):
     """Plot benchmark results."""
     with plt.style.context(["ipynb", "colorsblind10"]):
         # LaTeX rendering
         plt.rcParams["text.usetex"] = True
 
         bar_width = 0.8
-        transpiler_count = len(self.transpilers)
+        transpiler_count = len(benchmark.transpilers)
         cmap = plt.cm.get_cmap("tab10", transpiler_count)
 
-        for metric_name in self.results.results.keys():
+        for metric_name in benchmark.results.results.keys():
             # we are not plotting this
             if metric_name == "accepted_subs":
                 continue
@@ -74,11 +76,11 @@ def plot(self, legend_show=True, save=False):
 
             # Sort the data here
             sorted_results = sorted(
-                list(self.results.results[metric_name].items()),
+                list(benchmark.results.results[metric_name].items()),
                 key=lambda x: list(x[1].values())[0].average,
             )
 
-            self._plot_bars(metric_name, cmap, bar_width, sorted_results, ax)
+            benchmark._plot_bars(metric_name, cmap, bar_width, sorted_results, ax)
 
             ax.set_ylabel(pretty_name, fontsize=8)
 
@@ -113,7 +115,7 @@ def plot(self, legend_show=True, save=False):
 
             # Create the legend in the top plot
             if legend_show:
-                for j, transpiler in enumerate(self.transpilers):
+                for j, transpiler in enumerate(benchmark.transpilers):
                     axs[0].bar(0, 0, color=cmap(j), label=f"{transpiler.name}")
 
                 axs[0].legend(loc="center", ncol=2, fontsize=8, frameon=False)

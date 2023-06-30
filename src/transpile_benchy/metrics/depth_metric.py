@@ -12,8 +12,7 @@ class DepthMetric(MetricInterface):
 
     def __init__(self):
         """Initialize the metric."""
-        super().__init__()
-        self.name = "monodromy_depth"
+        super().__init__(name="monodromy_depth")
         self.use_geometric_mean = True
 
     def _get_pass(self, transpiler: CustomPassManager):
@@ -27,7 +26,7 @@ class DepthMetric(MetricInterface):
         hence the compare_results implementation checks if result1 is
         less than result2.
         """
-        return result1 < result2
+        return super().compare_results(result1, result2)
 
 
 # You can add more metrics here.
