@@ -17,6 +17,10 @@ class QASMInterface(SubmoduleInterface):
         """Initialize QASM submodule."""
         self.raw_circuits = self.get_filtered_files(filter_list)
 
+    def __len__(self):
+        """Return the number of circuits."""
+        return len(self.raw_circuits)
+
     def _load_qasm_file(self, file: Path) -> QuantumCircuit:
         """Load a QASM file."""
         try:
