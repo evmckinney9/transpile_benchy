@@ -78,7 +78,8 @@ class QASMBench(QASMInterface):
         # filter out the transpiled files
         qasm_files = filter(lambda file: "_transpiled" not in str(file), qasm_files)
         # harcode, remove these files that are just way too big or glithcing
-        manual_reject = ["vqe", "bwt", "ising_n26", "inverseqft_n4"]
+        # cc_n12 has classical control, so it's not a good candidate
+        manual_reject = ["vqe", "bwt", "ising_n26", "inverseqft_n4", "cc_n12"]
         qasm_files = filter(
             lambda file: not any(x in str(file) for x in manual_reject), qasm_files
         )
