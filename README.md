@@ -6,6 +6,7 @@ The primary aim of this project is to simplify the process of testing new transp
 ![Format Check](https://github.com/evmckinney9/transpile_benchy/actions/workflows/format-check.yml/badge.svg?branch=main)
 
 ---
+
 ### Installation
 
 I am using submodules because the dependencies are not all packaged. Therefore, when cloning the repository, you will need to run the following commands to get the submodules:
@@ -15,6 +16,7 @@ git clone https://github.com/evmckinney9/transpile_benchy.git --recurse-submodul
 ```
 
 ### Usage
+
 For a full example, see `src/notebooks/main.ipynb` The project is structured into four main parts. The first three are interfaces for the different components of the benchmarking suite. The fourth is the benchmarking class itself.
 
 ### 1. `interface.py`:
@@ -113,14 +115,18 @@ The main benchmark suite that we will use for this project is [QASMBench](https:
 This project is intended for our own research purposes and is not meant to be exhaustive. However, here are some other existing benchmark suites that are available in the field:
 
 Implemented:
+
 - [x] [QASMBench](https://github.com/pnnl/QASMBench)
 - [x] [RedQueen](https://github.com/Qiskit/red-queen/tree/main)
 - [x] [MQTBench](https://github.com/cda-tum/MQTBench)
-- [ ] [Arline Benchmarks](https://github.com/ArlineQ/arline_benchmarks)
-- [ ] [QC-App-Oriented-Benchmarks](https://github.com/SRI-International/QC-App-Oriented-Benchmarks)
-- [ ] [QUEKO-benchmark](https://github.com/tbcdebug/QUEKO-benchmark)
-- [ ] [Supermarq](https://github.com/SupertechLabs/client-superstaq)
+- [x] [QUEKO-benchmark](https://github.com/tbcdebug/QUEKO-benchmark)
+- [ ] [Supermarq](https://github.com/Infleqtion/client-superstaq/tree/main/supermarq-benchmarks)
 - [ ] [Revlib](https://www.revlib.org/index.php)
+- [ ] [QC-App-Oriented-Benchmarks](https://github.com/SRI-International/QC-App-Oriented-Benchmarks)
+
+Related projects:
+
+- [Arline Benchmarks](https://github.com/ArlineQ/arline_benchmarks)
 
 ### Further Reading
 
