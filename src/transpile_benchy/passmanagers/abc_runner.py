@@ -30,7 +30,7 @@ class CustomPassManager(ABC):
         """Append a analysis pass, using transpiler-specific configuration."""
         self.metric_passes.append(metric.get_pass(self))
 
-    def build_metric_stage(self) -> PassManager:
+    def build_metric_stage(self, **kwargs) -> PassManager:
         """Build a PassManager for metric analysis."""
         return PassManager(self.metric_passes)
 
