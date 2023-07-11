@@ -76,6 +76,8 @@ class Benchmark:
         for transpiler in self.transpilers:
             for _ in range(self.num_runs):
                 transpiled_circuit = self._try_transpilation(transpiler, circuit)
+                if transpiled_circuit is None:
+                    continue
                 for metric in self.metrics:
                     metric.add_result(transpiler, transpiled_circuit.name)
 

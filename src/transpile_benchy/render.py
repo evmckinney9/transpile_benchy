@@ -47,14 +47,14 @@ def _plot_bars(
                 color=cmap(j),
             )
 
-            # Mark the best result
-            ax.scatter(
-                i * transpiler_count + j * bar_width,
-                result.best,
-                color="black",
-                marker="*",
-                s=10,
-            )
+            # # Mark the best result
+            # ax.scatter(
+            #     i * transpiler_count + j * bar_width,
+            #     result.best,
+            #     color="black",
+            #     marker="*",
+            #     s=10,
+            # )
 
 
 def _plot_legend(axs: Axes, metric: MetricInterface, cmap) -> None:

@@ -57,6 +57,10 @@ class MQTBench(SubmoduleInterface):  # TODO needs filtering
         self.raw_circuits = get_supported_benchmarks()
         self.raw_circuits = self.get_filtered_files(filter_list)
 
+    def __str__(self):
+        """Build string as all the available circuit names."""
+        return str([s for s in self.raw_circuits])
+
     def get_filtered_files(self, filter_list) -> List:
         """Return a list of filtered QASM files."""
         if filter_list is None or self.raw_circuits is None:

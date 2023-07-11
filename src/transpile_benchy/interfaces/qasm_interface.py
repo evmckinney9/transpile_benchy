@@ -17,6 +17,10 @@ class QASMInterface(SubmoduleInterface):
         """Initialize QASM submodule."""
         self.raw_circuits = self.get_filtered_files(filter_list)
 
+    def __len__(self):
+        """Return the number of circuits."""
+        return len(self.raw_circuits)
+
     def _load_qasm_file(self, file: Path) -> QuantumCircuit:
         """Load a QASM file."""
         try:
@@ -66,15 +70,23 @@ class QASMBench(QASMInterface):
         self.qasm_files = self._get_qasm_files("QASMBench", self.size)
         super().__init__(filter_list)
 
-    @staticmethod
-    def _get_qasm_files(directory: str, size: str) -> List[Path]:
+    def _get_qasm_files(self, directory: str, size: str) -> List[Path]:
         """Return a list of QASM files."""
         prepath = Path(__file__).resolve().parent.parent.parent.parent
         qasm_files = prepath.glob(f"submodules/{directory}/{size}/**/*.qasm")
         # filter out the transpiled files
         qasm_files = filter(lambda file: "_transpiled" not in str(file), qasm_files)
         # harcode, remove these files that are just way too big or glithcing
-        manual_reject = ["vqe", "bwt", "ising_n26", "inverseqft_n4"]
+        # cc_n12 has classical control, so it's not a good candidate
+        # some are here just because we haven't implemented exclude fitler yet
+        manual_reject = [
+            "vqe",
+            "bwt",
+            "ising_n26",
+            "inverseqft_n4",
+            "cc_n12",
+            "wstate_n27",
+        ]
         qasm_files = filter(
             lambda file: not any(x in str(file) for x in manual_reject), qasm_files
         )
@@ -89,11 +101,26 @@ class RedQueen(QASMInterface):
         self.qasm_files = self._get_qasm_files("red-queen")
         super().__init__(filter_str)
 
-    @staticmethod
-    def _get_qasm_files(directory: str) -> List[Path]:
+    def _get_qasm_files(self, directory: str) -> List[Path]:
         """Return a list of QASM files."""
         prepath = Path(__file__).resolve().parent.parent.parent.parent
-        qasm_files = prepath.glob(
-            f"submodules/{directory}/red_queen/games/applications/qasm/*.qasm"
-        )
+        qasm_files = prepath.glob(f"submodules/{directory}/red_queen/games/**/*.qasm")
+        return list(qasm_files)
+
+
+class Queko(QASMInterface):
+    """Submodule for Queko circuits.
+
+    NOTE: Queko is a subset of RedQueen, so we don't need to add it to the library.
+    """
+
+    def __init__(self, filter_list: Optional[str] = None):
+        """Initialize Queko submodule."""
+        self.qasm_files = self._get_qasm_files("QUEKO-benchmark")
+        super().__init__(filter_list)
+
+    def _get_qasm_files(self, directory: str) -> List[Path]:
+        """Return a list of QASM files."""
+        prepath = Path(__file__).resolve().parent.parent.parent.parent
+        qasm_files = prepath.glob(f"submodules/{directory}/BNTF/*.qasm")
         return list(qasm_files)
