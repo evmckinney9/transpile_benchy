@@ -111,7 +111,10 @@ def _configure_plot(
 # Plot Creation
 # ===========================
 def plot_benchmark(
-    benchmark: Benchmark, legend_show: bool = True, save: bool = False
+    benchmark: Benchmark,
+    legend_show: bool = True,
+    save: bool = False,
+    filename: str = "",
 ) -> None:
     """Plot benchmark results."""
     with plt.style.context(["ipynb", "colorsblind10"]):
@@ -141,4 +144,5 @@ def plot_benchmark(
             plt.show()
 
             if save:
-                fig.savefig(f"{metric.name}_benchmark.svg", dpi=300)
+                # fig.savefig(f"{metric.name}_benchmark.svg", dpi=300)
+                fig.savefig(f"{filename}_{metric.name}_benchmark.svg", dpi=300)
