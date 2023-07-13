@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from transpile_benchy.passmanagers.abc_runner import CustomPassManager
 
+import inspect
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from statistics import mean
@@ -61,8 +62,6 @@ class Result:
 class MetricInterface(ABC):
     """Abstract class for a metric."""
 
-    required_attributes = []  # Each subclass can override this list
-
     def __init__(self, name: str, pretty_name: str = None):
         """Initialize the result metrics."""
         self.name = name
@@ -71,16 +70,24 @@ class MetricInterface(ABC):
         self.use_geometric_mean = False
         self.clear_saved_results()
 
-    def get_pass(self, transpiler) -> AnalysisPass:
-        """Return the pass associated with this metric."""
-        # check if all required attributes are present in the transpiler
-        for attribute in self.required_attributes:
-            if not hasattr(transpiler, attribute):
-                raise ValueError(
-                    f"Transpiler missing '{attribute}' attr to instantiate {self.name}."
-                )
+    def construct_pass(self, transpiler) -> AnalysisPass:
+        """Construct the pass associated with this metric.
 
-        return self._get_pass(transpiler)
+        Check if the required attributes exist in the transpiler and
+        then return the pass associated with this metric by calling the
+        _construct_pass method.
+        """
+        required_attributes = inspect.signature(self._construct_pass).parameters.keys()
+        missing_attributes = [
+            attr for attr in required_attributes if not hasattr(transpiler, attr)
+        ]
+        if missing_attributes:
+            raise ValueError(
+                f"Transpiler missing these attributes: '{missing_attributes}',\
+                needed to instantiate {self.name}."
+            )
+        attrs = {attr: transpiler.__dict__.get(attr) for attr in required_attributes}
+        return self._construct_pass(**attrs)
 
     def clear_saved_results(self):
         """Clear all saved results."""
@@ -128,7 +135,7 @@ class MetricInterface(ABC):
         return sorted_results
 
     @abstractmethod
-    def _get_pass(self, transpiler):
+    def _construct_pass(self, **kwargs):
         """Return the pass associated with this metric."""
         raise NotImplementedError
 

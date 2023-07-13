@@ -40,9 +40,10 @@ class Benchmark:
             raise ValueError("Transpilers must have unique names")
 
         # give each transpiler a reference to the metrics
-        for metric in self.metrics:
-            for transpiler in self.transpilers:
-                transpiler.append_metric_pass(metric)
+        for transpiler in self.transpilers:
+            transpiler._clear_metrics()
+            for metric in self.metrics:
+                transpiler._append_metric_pass(metric)
 
     def _filter_circuit(self, circuit: QuantumCircuit) -> bool:
         """Filter out unwanted circuits based on their properties.

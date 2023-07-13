@@ -6,6 +6,7 @@ transpilers. The run() method is also defined here which runs the three
 processing methods and returns the resulting circuit.
 """
 from abc import ABC, abstractmethod
+from typing import List
 
 from qiskit.transpiler import PassManager
 
@@ -15,40 +16,49 @@ from transpile_benchy.metrics.abc_metrics import MetricInterface
 class CustomPassManager(ABC):
     """Abstract class outlining the structure of a custom PassManager."""
 
-    def __init__(self, stages=None, **kwargs):
+    def __init__(self, name=None):
         """Initialize the runner."""
-        self.name = None
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-        self.name = self.name or self.__class__.__name__
+        self.name = name or self.__class__.__name__
         self.property_set = {}
-        self.stages = stages if stages else []
+        self.stages: List[PassManager] = []
+        self.metric_passes = PassManager()
 
-    def append_stage(self, stage_builder):
+    def append_stage(self, stage: PassManager):
         """Add a new stage to the sequence."""
-        self.stages.append(stage_builder)
+        self.stages.append(stage)
 
-    def append_metric_pass(self, metric: MetricInterface):
+    def _clear_metrics(self):
+        """Clear the metrics from the transpiler."""
+        self.metric_passes = PassManager()
+
+    def _append_metric_pass(self, metric: MetricInterface):
         """Append a analysis pass, using transpiler-specific configuration."""
-        self.metric_passes.append(metric.get_pass(self))
-
-    def build_metric_stage(self, **kwargs) -> PassManager:
-        """Build a PassManager for metric analysis."""
-        return PassManager(self.metric_passes)
+        self.metric_passes.append(metric.construct_pass(self))
 
     def run(self, circuit):
         """Run the transpiler on the circuit."""
         self.property_set = {}  # reset property set
-        for stage_builder in self.stages:
-            stage = stage_builder()
+        for stage in self.stages:
             stage.property_set = self.property_set
             circuit = stage.run(circuit)
             self.property_set.update(stage.property_set)
+
+        # run metrics
+        self.metric_passes.property_set = self.property_set
+        self.metric_passes.run(circuit)
+        self.property_set.update(self.metric_passes.property_set)
         return circuit
 
 
 class ThreeStageRunner(CustomPassManager):
     """Abstract class outlining the structure of a custom PassManager."""
+
+    def __init__(self, name=None):
+        """Initialize the runner."""
+        super().__init__(name)
+        self.append_stage(self.build_pre_stage())
+        self.append_stage(self.build_main_stage())
+        self.append_stage(self.build_post_stage())
 
     @abstractmethod
     def build_pre_stage(self) -> PassManager:

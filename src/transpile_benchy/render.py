@@ -126,9 +126,11 @@ def plot_benchmark(
 
             fig, ax = _initialize_plot(legend_show)
 
+            # XXX manually adjust as needed
             # Adjust bar width according to number of transpilers
             transpiler_count = len(metric.saved_results.keys())
-            bar_width = 3 / transpiler_count
+            bar_width = 2.0 / transpiler_count
+
             cmap = plt.cm.get_cmap("tab10", transpiler_count)
 
             sorted_results = metric.prepare_plot_data()
