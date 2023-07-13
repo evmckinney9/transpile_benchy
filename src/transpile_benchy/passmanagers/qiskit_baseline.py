@@ -43,12 +43,20 @@ class QiskitBaseline(CustomPassManager):
 
     def __init__(self, optimization_level: int, **transpiler_kwargs):
         """Initialize the QiskitBaseline."""
-        super().__init__(name=f"level_{optimization_level}")
-        self.append_stage(
-            QiskitStage.from_predefined_config(
-                optimization_level=optimization_level, **transpiler_kwargs
-            )
-        )
+        super().__init__(name=f"Qiskit_o{optimization_level}")
+        self.optimization_level = optimization_level
+        self.transpiler_kwargs = transpiler_kwargs
+
         # required attributes for the metrics
         self.basis_gate = CXGate()
         self.gate_costs = 1.0
+
+    def stage_builder(self):
+        """Build stages in a defined sequence."""
+
+        def _builder():
+            yield QiskitStage.from_predefined_config(
+                optimization_level=self.optimization_level, **self.transpiler_kwargs
+            )
+
+        return _builder
