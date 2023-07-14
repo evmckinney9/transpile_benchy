@@ -33,6 +33,7 @@ class CustomPassManager(ABC):
         self.property_set = {}
         self.metric_passes = PassManager()
         self.stages_builder = self.stage_builder()
+        self.timer = {}  # store time information
 
     def stage_builder(self):
         """Override this method to define the builder function for stages."""
@@ -68,9 +69,12 @@ class CustomPassManager(ABC):
         self.property_set.update(self.metric_passes.property_set)
         end_time = time.time()  # end timer
         self.timer["total_runtime"] = end_time - start_time  # store total runtime
-        self.property_set[
-            "timer"
-        ] = self.timer  # add timing information to property set
+
+        # add timing information to property set
+        # do this if want all the stages
+        # self.property_set["timer"] = self.timer
+        # for now, just add total runtime
+        self.property_set["total_runtime"] = self.timer["total_runtime"]
 
         return circuit
 

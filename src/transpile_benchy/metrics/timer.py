@@ -12,7 +12,7 @@ class TimeMetric(MetricInterface):
 
     def __init__(self):
         """Initialize the metric."""
-        super().__init__(name="'total_runtime'", pretty_name="Total Runtime")
+        super().__init__(name="total_runtime", pretty_name="Total Runtime")
 
     def _construct_pass(self):
         """Return the pass associated with this metric."""
