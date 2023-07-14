@@ -43,16 +43,16 @@ class QiskitFunctionInterface(SubmoduleInterface):
         def generate_functions(self) -> Dict[str, Callable]:
             """Generate a dictionary of quantum functions."""
             return {
-                # f"{self.function_type.__name__.lower()}_{n}": self._create_function(n)
-                f"{self.function_type.__name__}": self._create_function(n)
+                f"{self.function_type.__name__}_{n}": self._create_function(n)
+                # f"{self.function_type.__name__}": self._create_function(n)
                 for n in self.num_qubits
             }
 
         def _create_function(self, num_qubits: int) -> Callable:
             """Create a quantum function given number of qubits."""
             func = self.function_type(num_qubits)
-            # func.name = f"{self.function_type.__name__.lower()}_{num_qubits}"
-            func.name = f"{self.function_type.__name__}"
+            func.name = f"{self.function_type.__name__}_{num_qubits}"
+            # func.name = f"{self.function_type.__name__}"
             return func
 
     def __init__(self, function_type: Type[Callable], num_qubits: List[int]) -> None:

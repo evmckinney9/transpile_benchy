@@ -62,12 +62,13 @@ class Benchmark:
     def _try_transpilation(self, transpiler, circuit):
         """Attempt to transpile, returns transpiled circuit or raises Error."""
         if not self._filter_circuit(circuit):
-            self.logger.debug(f"Skipping circuit {circuit.name} due to filtering")
+            if self.logger:
+                self.logger.debug(f"Skipping circuit {circuit.name} due to filtering")
             return None
-
-        self.logger.debug(
-            f"Running transpiler {transpiler.name} on circuit {circuit.name}"
-        )
+        if self.logger:
+            self.logger.debug(
+                f"Running transpiler {transpiler.name} on circuit {circuit.name}"
+            )
         try:
             transpiled_circuit = transpiler.run(circuit)
         except Exception as e:
@@ -76,7 +77,8 @@ class Benchmark:
 
     def run_single_circuit(self, circuit: QuantumCircuit):
         """Run a benchmark on a single circuit."""
-        self.logger.debug(f"Running benchmark for circuit {circuit.name}")
+        if self.logger:
+            self.logger.debug(f"Running benchmark for circuit {circuit.name}")
         for transpiler in self.transpilers:
             for _ in range(self.num_runs):
                 transpiled_circuit = self._try_transpilation(transpiler, circuit)
@@ -87,7 +89,8 @@ class Benchmark:
 
     def run(self):
         """Run benchmark."""
-        self.logger.info("Running benchmarks for circuits...")
+        if self.logger:
+            self.logger.info("Running benchmarks for circuits...")
         for submodule in self.submodules:
             total = submodule.circuit_count()
             circuit_iterator = submodule.get_quantum_circuits()
