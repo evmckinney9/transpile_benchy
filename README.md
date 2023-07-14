@@ -1,5 +1,7 @@
 # transpile_benchy
 
+> :warning: README.md documentation is out of date :(
+
 The primary aim of this project is to simplify the process of testing new transpilation passes against a wide range of circuits. In my research studying quantum circuit optimizations, maintaining this repository deocupled from individual projects will make it much easier to evaluate and write reports. Creating a streamlined benchmark suite makes it easy to test the efficiency between multiple transpilation configurations.
 
 ![Tests](https://github.com/evmckinney9/transpile_benchy/actions/workflows/tests.yml/badge.svg?branch=main)
