@@ -13,6 +13,7 @@ from tqdm import tqdm
 
 from transpile_benchy.interfaces.abc_interface import SubmoduleInterface
 from transpile_benchy.metrics.abc_metrics import MetricInterface
+from transpile_benchy.metrics.timer import TimeMetric
 from transpile_benchy.passmanagers.abc_runner import CustomPassManager
 
 
@@ -31,6 +32,8 @@ class Benchmark:
         self.transpilers = transpilers
         self.submodules = submodules
         self.metrics = metrics
+        # automatically extend with TimerMetric
+        self.metrics.append(TimeMetric())
         self.circuit_names = []
         self.num_runs = num_runs
         self.logger = logger

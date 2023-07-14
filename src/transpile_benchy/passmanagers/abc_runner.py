@@ -5,6 +5,7 @@ which are meant to be implemented in subclasses for different types of
 transpilers. The run() method is also defined here which runs the three
 processing methods and returns the resulting circuit.
 """
+import time
 from abc import ABC, abstractmethod
 
 from qiskit.transpiler import PassManager
@@ -51,15 +52,26 @@ class CustomPassManager(ABC):
     def run(self, circuit):
         """Run the transpiler on the circuit."""
         self.property_set = {}  # reset property set
+        start_time = time.time()  # start timer
+
         for stage in self.stages_builder():
+            stage_end = time.time()  # start timer for each stage
             stage.property_set = self.property_set
             circuit = stage.run(circuit)
             self.property_set.update(stage.property_set)
+            stage_start = time.time()  # end timer for each stage
+            self.timer[f"{stage.__class__.__name__}_runtime"] = stage_end - stage_start
 
         # run metrics
         self.metric_passes.property_set = self.property_set
         self.metric_passes.run(circuit)
         self.property_set.update(self.metric_passes.property_set)
+        end_time = time.time()  # end timer
+        self.timer["total_runtime"] = end_time - start_time  # store total runtime
+        self.property_set[
+            "timer"
+        ] = self.timer  # add timing information to property set
+
         return circuit
 
 
