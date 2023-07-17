@@ -24,14 +24,14 @@ class Benchmark:
         self,
         transpilers: List[CustomPassManager],
         submodules: List[SubmoduleInterface],
-        metrics: List[MetricInterface],
+        metrics: List[MetricInterface] = None,
         logger: Logger = None,
         num_runs: int = 3,
     ):
         """Initialize benchmark runner."""
         self.transpilers = transpilers
         self.submodules = submodules
-        self.metrics = metrics
+        self.metrics = metrics or []
         # automatically extend with TimerMetric
         self.metrics.append(TimeMetric())
         self.circuit_names = []
@@ -93,15 +93,14 @@ class Benchmark:
             self.logger.info("Running benchmarks for circuits...")
         for submodule in self.submodules:
             total = submodule.circuit_count()
-            circuit_iterator = submodule.get_quantum_circuits()
             for circuit in tqdm(
-                circuit_iterator,
+                submodule,
                 total=total,
                 desc=f"Running circuits for {submodule.__class__.__name__}",
             ):
                 self.run_single_circuit(circuit)
 
-    def summary_statistics(
+    def _calculate_statistics(
         self,
         metric: MetricInterface,
         transpiler_1: CustomPassManager,
@@ -163,6 +162,30 @@ class Benchmark:
             "percent_changes": percent_changes,
         }
 
+    def summary_statistics(self) -> dict:
+        """Calculate statistics for all metrics and all pairs of transpilers.
+
+        Returns:
+            dict: A nested dictionary where the first level of keys are metric names,
+                the second level of keys are pairs of transpiler names (as a tuple),
+                and the values are calculated statistics for the corresponding metric
+                and pair of transpilers.
+        """
+        summary = {}
+
+        for metric in self.metrics:
+            summary[metric.name] = {}
+            for i in range(len(self.transpilers)):
+                for j in range(i + 1, len(self.transpilers)):
+                    transpiler_1 = self.transpilers[i]
+                    transpiler_2 = self.transpilers[j]
+                    # calculate/store statistics for this metric on pair of transpilers
+                    summary[metric.name][
+                        (transpiler_1.name, transpiler_2.name)
+                    ] = self._calculate_statistics(metric, transpiler_1, transpiler_2)
+
+        return summary
+
     # Below methods used for pretty printing results
     # print(benchmark) will print a table of results
     # FIXME, the following methods are redundant and should be consolidated
@@ -186,7 +209,7 @@ class Benchmark:
                     )
 
     def __str__(self):
-        """Return a string representation of the benchmark results."""
+        """Return a verbose string representation of the benchmark results."""
         output = []
         sorted_results = sorted(
             self, key=lambda x: (x[1], x[0], x[2])

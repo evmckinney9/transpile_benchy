@@ -14,78 +14,67 @@ to spend time building all QuantumCircuits, only build them when needed.
 """
 import re
 from abc import ABC, abstractmethod
-from typing import Iterator, List, Optional
-
-from mqt.bench.benchmark_generator import get_benchmark
-from mqt.bench.utils import get_supported_benchmarks
+from collections.abc import Iterator
+from typing import Dict, List, Optional
 
 # from qiskit.circuit.exceptions import QasmError
 from qiskit import QuantumCircuit
 
 
-class SubmoduleInterface(ABC):
+class SubmoduleInterface(Iterator[QuantumCircuit], ABC):
     """Abstract class for a submodule."""
 
-    def __init__(self) -> None:
+    def __init__(self, filter_config: Optional[Dict[str, List[str]]]) -> None:
         """Initialize submodule."""
-        self.raw_circuits = None
+        self.filter_config = filter_config
+        all_circuits = self._get_all_circuits()
+        self.circuits = self._filter(all_circuits)
+        self.circuit_iter = iter(self.circuits)
 
-    def get_quantum_circuits(self) -> Iterator[QuantumCircuit]:
-        """Return an iterator over filtered QuantumCircuits."""
-        for qc in self._get_quantum_circuits():
-            yield qc
+    def __iter__(self) -> Iterator[QuantumCircuit]:
+        """Return an iterator over QuantumCircuits."""
+        return self
+
+    def __next__(self) -> QuantumCircuit:
+        """Return the next QuantumCircuit."""
+        return self._load_circuit(next(self.circuit_iter))
 
     @abstractmethod
-    def _get_quantum_circuits(self) -> Iterator[QuantumCircuit]:
-        """Return an iterator over QuantumCircuits."""
+    def _get_all_circuits(self) -> List[str]:
+        """Return a list of all possible circuits."""
+        raise NotImplementedError
+
+    def _filter(self, circuits: List) -> List:
+        """Filter the list of circuits based on the filter_config."""
+        if self.filter_config is None:
+            return circuits
+
+        include = self.filter_config.get("include", None)
+        exclude = self.filter_config.get("exclude", None)
+
+        if include is not None:
+            circuits = filter(
+                lambda circuit: any(
+                    re.search(pattern, str(circuit)) for pattern in include
+                ),
+                circuits,
+            )
+
+        if exclude is not None:
+            circuits = filter(
+                lambda circuit: all(
+                    re.search(pattern, str(circuit)) is None for pattern in exclude
+                ),
+                circuits,
+            )
+
+        return list(circuits)
+
+    @abstractmethod
+    def _load_circuit(self, circuit_ir) -> QuantumCircuit:
+        """Load a QuantumCircuit from a string."""
         raise NotImplementedError
 
     def circuit_count(self) -> int:
-        """Return total number of QuantumCircuits post filtering."""
-        return len(self.raw_circuits)
-
-
-class MQTBench(SubmoduleInterface):  # TODO needs filtering
-    """Submodule for MQTBench circuits."""
-
-    def __init__(
-        self, num_qubits: int, filter_list: Optional[List[str]] = None
-    ) -> None:
-        """Initialize MQTBench submodule."""
-        super().__init__()
-        self.num_qubits = num_qubits
-        self.raw_circuits = get_supported_benchmarks()
-        self.raw_circuits = self.get_filtered_files(filter_list)
-
-    def __str__(self):
-        """Build string as all the available circuit names."""
-        return str([s for s in self.raw_circuits])
-
-    def get_filtered_files(self, filter_list) -> List:
-        """Return a list of filtered QASM files."""
-        if filter_list is None or self.raw_circuits is None:
-            return self.raw_circuits
-
-        return [
-            s
-            for s in self.raw_circuits
-            if any(re.search(pattern, s) for pattern in filter_list)
-        ]
-
-    def _get_quantum_circuits(self) -> Iterator[QuantumCircuit]:
-        """Return an iterator over QuantumCircuits."""
-        for bench_str in self.raw_circuits:
-            if bench_str in ["shor", "groundstate"]:
-                continue  # NOTE way too big
-                # yield get_benchmark(
-                #     benchmark_name=bench_str,
-                #     level="alg",
-                #     circuit_size=self.num_qubits,
-                #     benchmark_instance_name="xsmall"
-                # )
-            else:
-                yield get_benchmark(
-                    benchmark_name=bench_str,
-                    level="alg",
-                    circuit_size=self.num_qubits,
-                )
+        """Return total number of QuantumCircuits post-filtering."""
+        return len(self.circuits)
