@@ -8,6 +8,8 @@ from transpile_benchy.interfaces.qasm_interface import QASMBench, RedQueen
 class Library:
     """A class to handle the library of circuits."""
 
+    # FIXME ???
+
     def __init__(self, size: str, filter_list: Optional[List[str]] = None):
         """Initialize the library."""
         self.interfaces = []
@@ -15,17 +17,3 @@ class Library:
         self.interfaces.append(RedQueen(filter_list))
         # self.interfaces.append(MQTBench(num_qubits=8))
         # self.interfaces.append(Queko(filter_list))
-
-    def __str__(self):
-        """Build string as all the available circuit names."""
-        return str([str(intf) for intf in self.interfaces])
-
-    def __iter__(self):
-        """Iterate over all the circuits."""
-        for interface in self.interfaces:
-            for circuit in interface:
-                yield circuit
-
-    def __len__(self):
-        """Return the number of circuits."""
-        return sum(len(interface) for interface in self.interfaces)
