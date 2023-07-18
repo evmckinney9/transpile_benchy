@@ -11,7 +11,7 @@ from transpile_benchy.interfaces.qasm_interface import (
 from transpile_benchy.interfaces.qiskit_interface import QiskitCircuitInterface
 
 
-class Library:
+class CircuitLibrary:
     """A class to handle the library of circuits."""
 
     def __init__(self, circuit_list=List[str]):
@@ -23,6 +23,14 @@ class Library:
         self.interfaces.append(BQSKitInterface())
         self.interfaces.append(QiskitCircuitInterface(num_qubits=0))
         self.circuit_list = circuit_list
+        # verify that all circuits are in the library
+        for circuit_name in self.circuit_list:
+            if not any(circuit_name in interface for interface in self.interfaces):
+                raise ValueError(f"Circuit '{circuit_name}' not found in any interface")
+
+    def circuit_count(self) -> int:
+        """Return the number of circuits in the library."""
+        return len(self.circuit_list)
 
     @classmethod
     def from_txt(cls, filename):
@@ -52,25 +60,13 @@ class Library:
         num_qubits = int(num_qubits)
 
         for interface in self.interfaces:
-            # If the interface requires num_qubits,
-            # set it before trying to load the circuit
-            if isinstance(interface, QiskitCircuitInterface) or isinstance(
-                interface, MQTBench
-            ):
-                interface.set_num_qubits(num_qubits)
-                try:
-                    return interface._load_circuit(base_name + "_0")
-                except CircuitNotFoundError:
-                    continue
-            else:
-                try:
+            if circuit_name in interface:
+                if interface.dynamic:
+                    print(f"Loading {circuit_name} from {interface.__class__.__name__}")
+                    return interface._load_circuit(base_name, num_qubits)
+                else:
+                    print(f"Loading {circuit_name} from {interface.__class__.__name__}")
                     return interface._load_circuit(circuit_name)
-                except CircuitNotFoundError:
-                    continue
+            else:
+                pass  # don't use continue, since this is subroutine of generator
         raise ValueError(f"Circuit '{circuit_name}' not found in any interface")
-
-
-class CircuitNotFoundError(Exception):
-    """Exception raised when a circuit is not found in the library."""
-
-    pass

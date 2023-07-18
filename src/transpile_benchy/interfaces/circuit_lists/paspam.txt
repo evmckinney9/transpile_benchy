@@ -1,7 +1,7 @@
-adder_9
-adder_63
-mul_10
-mul_60
+adder_16
+adder_64
+mul_16
+mul_64
 qft_5
 qft_64
 grover_5

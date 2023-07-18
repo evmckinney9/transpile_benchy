@@ -11,7 +11,7 @@ from typing import List
 from qiskit import QuantumCircuit
 from tqdm import tqdm
 
-from transpile_benchy.interfaces.abc_interface import SubmoduleInterface
+from transpile_benchy.library import CircuitLibrary
 from transpile_benchy.metrics.abc_metrics import MetricInterface
 from transpile_benchy.metrics.timer import TimeMetric
 from transpile_benchy.passmanagers.abc_runner import CustomPassManager
@@ -23,14 +23,14 @@ class Benchmark:
     def __init__(
         self,
         transpilers: List[CustomPassManager],
-        submodules: List[SubmoduleInterface],
+        circuit_library: CircuitLibrary,
         metrics: List[MetricInterface] = None,
         logger: Logger = None,
         num_runs: int = 3,
     ):
         """Initialize benchmark runner."""
         self.transpilers = transpilers
-        self.submodules = submodules
+        self.library = circuit_library
         self.metrics = metrics or []
         # automatically extend with TimerMetric
         self.metrics.append(TimeMetric())
@@ -91,14 +91,13 @@ class Benchmark:
         """Run benchmark."""
         if self.logger:
             self.logger.info("Running benchmarks for circuits...")
-        for submodule in self.submodules:
-            total = submodule.circuit_count()
-            for circuit in tqdm(
-                submodule,
-                total=total,
-                desc=f"Running circuits for {submodule.__class__.__name__}",
-            ):
-                self.run_single_circuit(circuit)
+        total = self.library.circuit_count()
+        for circuit in tqdm(
+            self.library,
+            total=total,
+            desc="Circuits from library",
+        ):
+            self.run_single_circuit(circuit)
 
     def _calculate_statistics(
         self,

@@ -6,7 +6,7 @@ from mqt.bench.utils import get_supported_benchmarks
 from qiskit import QuantumCircuit
 
 from transpile_benchy.interfaces.abc_interface import SubmoduleInterface
-from transpile_benchy.library import CircuitNotFoundError
+from transpile_benchy.interfaces.errors import CircuitNotFoundError
 
 
 class MQTBench(SubmoduleInterface):
@@ -21,19 +21,25 @@ class MQTBench(SubmoduleInterface):
             filter_config = {}
         exclude_circuits = filter_config.setdefault("exclude", [])
         exclude_circuits += ["shor", "groundstate"]
-        super().__init__(filter_config)
+        super().__init__(filter_config, dynamic=True)
 
     def _get_all_circuits(self) -> List[str]:
-        """Return a list of all possible circuits."""
+        """Return a list of all possible circuits.
+
+        NOTE: these names don't have num_qubits suffix.
+        """
         return get_supported_benchmarks()
 
-    def _load_circuit(self, circuit_str: str) -> QuantumCircuit:
+    def _load_circuit(self, circuit_str: str, num_qubits=None) -> QuantumCircuit:
         """Load a QuantumCircuit from a string."""
         try:
-            return get_benchmark(
+            n = num_qubits or self.num_qubits
+            qc = get_benchmark(
                 benchmark_name=circuit_str,
                 level="alg",
-                circuit_size=self.num_qubits,
+                circuit_size=n,
             )
+            qc.name = f"{circuit_str}_{n}"
+            return qc
         except Exception as e:
             raise CircuitNotFoundError(f"Failed to load {circuit_str}: {e}")

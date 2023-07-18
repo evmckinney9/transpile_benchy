@@ -10,8 +10,8 @@ from typing import Callable, Dict, List, Optional, Type
 from qiskit import QuantumCircuit
 
 from transpile_benchy.interfaces.abc_interface import SubmoduleInterface
+from transpile_benchy.interfaces.errors import CircuitNotFoundError
 from transpile_benchy.interfaces.qiskit_circuits import available_circuits
-from transpile_benchy.library import CircuitNotFoundError
 
 
 class QiskitCircuitInterface(SubmoduleInterface):
@@ -25,17 +25,20 @@ class QiskitCircuitInterface(SubmoduleInterface):
         """Initialize QiskitCircuitInterface submodule."""
         self.num_qubits = num_qubits
         self.circuit_functions = available_circuits
-        super().__init__(filter_config)
+        super().__init__(filter_config, dynamic=True)
 
     def _get_all_circuits(self) -> List[str]:
         """Return a list of all possible circuits."""
-        return [func.__name__ for func in self.circuit_functions]
+        return [f"{func.__name__}" for func in self.circuit_functions]
 
-    def _load_circuit(self, circuit_str: str) -> QuantumCircuit:
+    def _load_circuit(self, circuit_str: str, num_qubits=None) -> QuantumCircuit:
         """Load a QuantumCircuit from a string."""
         for func in self.circuit_functions:
             if func.__name__ == circuit_str:
-                return func(self.num_qubits)
+                n = num_qubits or self.num_qubits
+                temp_qc = func(n)
+                temp_qc.name = f"{circuit_str}_{n}"
+                return temp_qc
 
         raise CircuitNotFoundError(f"Circuit {circuit_str} not found.")
 

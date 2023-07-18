@@ -25,7 +25,6 @@ depth = 2  # arbitary idk what to set this to
 # VQE
 def vqe_linear(q):
     """Return a VQE circuit with linear entanglement."""
-    vqe_linear.__name__ = f"vqe_linear_{q}"
     # set np random seed
     # np.random.seed(42)
     # apply the ansatz depth times
@@ -39,7 +38,6 @@ def vqe_linear(q):
 
 def vqe_full(q):
     """Return a VQE circuit with full entanglement."""
-    vqe_full.__name__ = f"vqe_full_{q}"
     # set np random seed
     # np.random.seed(42)
     vqe_circuit_full = EfficientSU2(num_qubits=q, entanglement="full")
@@ -51,23 +49,18 @@ def vqe_full(q):
 # Quantum Volume
 def qv(q):
     """Return a Quantum Volume circuit."""
-    qv.__name__ = f"qv_{q}"
-    qv_qc = QuantumVolume(num_qubits=q, depth=q)
-    return qv_qc
+    return QuantumVolume(num_qubits=q, depth=q)
 
 
 # QFT
 def qft(q):
     """Return a QFT circuit."""
-    qft.__name__ = f"qft_{q}"
-    qft_qc = QFT(q)
-    return qft_qc
+    return QFT(q)
 
 
 # QAOA
 def qaoa(q):
     """Return a QAOA circuit."""
-    qaoa.__name__ = f"qaoa_{q}"
     # set np random seed
     # np.random.seed(42)
     qc_mix = QuantumCircuit(q)
@@ -88,7 +81,6 @@ def qaoa(q):
 # Adder
 def adder(q):
     """Return a ripple carry adder circuit."""
-    adder.__name__ = f"adder_{q}"
     if q % 2 != 0:
         raise ValueError("q must be even")
     add_qc = QuantumCircuit(q).compose(
@@ -98,9 +90,8 @@ def adder(q):
 
 
 # Multiplier
-def multiplier(q):
+def mul(q):
     """Return a rgqft multiplier circuit."""
-    multiplier.__name__ = f"mul_{q}"
     if q % 4 != 0:
         raise ValueError("q must be divisible by 4")
     mul_qc = QuantumCircuit(q).compose(
@@ -112,7 +103,6 @@ def multiplier(q):
 # GHZ
 def ghz(q):
     """Return a GHZ circuit."""
-    ghz.__name__ = f"ghz_{q}"
     ghz_qc = QuantumCircuit(q)
     ghz_qc.h(0)
     for i in range(1, q):
@@ -123,7 +113,6 @@ def ghz(q):
 # Hidden Linear Function
 def hlf(q):
     """Return a Hidden Linear Function circuit."""
-    hlf.__name__ = f"hlf_{q}"
     # set np random seed
     # np.random.seed(42)
     # create a random symmetric adjacency matrix
@@ -137,7 +126,6 @@ def hlf(q):
 # Grover
 def grover(q):
     """Return a Grover circuit."""
-    grover.__name__ = f"grover_{q}"
     q = int(q / 2)  # Grover's take so long because of the MCMT, do a smaller circuit
     # set numpy seed
     np.random.seed(42)
@@ -161,7 +149,7 @@ available_circuits = [
     qft,
     qaoa,
     adder,
-    multiplier,
+    mul,
     ghz,
     hlf,
     grover,
