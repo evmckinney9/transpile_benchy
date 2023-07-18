@@ -27,6 +27,7 @@ class Result:
 
     metric: "MetricInterface"
     trials: List = field(default_factory=list)
+    data: List = field(default_factory=list)
 
     def __repr__(self) -> str:
         """Pretty print the result."""
@@ -34,7 +35,14 @@ class Result:
 
     def add_trial(self, value):
         """Add a trial result."""
-        self.trials.append(value)
+        self.data.append(value)
+        # NOTE, this is a workaround for when I want to save lists instead of floats
+        # for example, tracking cost as function of layout restarts
+        # in practice, we just keep the minimum, but I want to keep the full list
+        if isinstance(value, list):
+            self.trials.append(min(value))
+        else:
+            self.trials.append(value)
 
     @property
     def average(self):

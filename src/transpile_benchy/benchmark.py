@@ -59,7 +59,7 @@ class Benchmark:
             return False
         return circuit.depth() <= 800 and circuit.num_qubits <= 36
 
-    def _try_transpilation(self, transpiler, circuit):
+    def _try_transpilation(self, transpiler, circuit, run_index):
         """Attempt to transpile, returns transpiled circuit or raises Error."""
         if not self._filter_circuit(circuit):
             if self.logger:
@@ -70,6 +70,11 @@ class Benchmark:
                 f"Running transpiler {transpiler.name} on circuit {circuit.name}"
             )
         try:
+            # ensure that multiple runs have different rng
+            # otherwise no point in running multiple times :)
+            if hasattr(transpiler, "seed"):
+                transpiler.set_seed(run_index)
+
             transpiled_circuit = transpiler.run(circuit)
         except Exception as e:
             raise ValueError("Transpiler failed") from e
@@ -80,8 +85,10 @@ class Benchmark:
         if self.logger:
             self.logger.debug(f"Running benchmark for circuit {circuit.name}")
         for transpiler in self.transpilers:
-            for _ in range(self.num_runs):
-                transpiled_circuit = self._try_transpilation(transpiler, circuit)
+            for run_index in range(self.num_runs):
+                transpiled_circuit = self._try_transpilation(
+                    transpiler, circuit, run_index
+                )
                 if transpiled_circuit is None:
                     continue
                 for metric in self.metrics:
