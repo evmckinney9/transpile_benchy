@@ -73,7 +73,7 @@ class Benchmark:
             # ensure that multiple runs have different rng
             # otherwise no point in running multiple times :)
             if hasattr(transpiler, "seed"):
-                transpiler.set_seed(run_index)
+                transpiler.seed = run_index
 
             transpiled_circuit = transpiler.run(circuit)
         except Exception as e:
