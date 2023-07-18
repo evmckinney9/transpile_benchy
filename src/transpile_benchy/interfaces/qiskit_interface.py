@@ -62,7 +62,7 @@ class QuantumCircuitFactory(SubmoduleInterface):
         """Initialize QuantumCircuitFactory."""
         self.function_type = function_type
         self.num_qubits = num_qubits
-        super().__init__()
+        super().__init__(filter_config={})
 
     def _get_all_circuits(self) -> List[str]:
         """Return a list of all possible circuit names."""

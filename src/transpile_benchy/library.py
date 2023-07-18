@@ -2,6 +2,7 @@
 
 from typing import List
 
+from transpile_benchy.interfaces.abc_interface import SubmoduleInterface
 from transpile_benchy.interfaces.mqt_interface import MQTBench
 from transpile_benchy.interfaces.qasm_interface import (
     BQSKitInterface,
@@ -14,14 +15,19 @@ from transpile_benchy.interfaces.qiskit_interface import QiskitCircuitInterface
 class CircuitLibrary:
     """A class to handle the library of circuits."""
 
-    def __init__(self, circuit_list=List[str]):
+    def __init__(
+        self, circuit_list: List[str], interfaces: List[SubmoduleInterface] = None
+    ):
         """Initialize the library."""
-        self.interfaces = []
-        self.interfaces.append(QASMBench())
-        self.interfaces.append(RedQueen())
-        self.interfaces.append(MQTBench(num_qubits=0))
-        self.interfaces.append(BQSKitInterface())
-        self.interfaces.append(QiskitCircuitInterface(num_qubits=0))
+        if interfaces:
+            self.interfaces = interfaces
+        else:  # add all interfaces
+            self.interfaces = []
+            self.interfaces.append(QASMBench())
+            self.interfaces.append(RedQueen())
+            self.interfaces.append(MQTBench(num_qubits=0))
+            self.interfaces.append(BQSKitInterface())
+            self.interfaces.append(QiskitCircuitInterface(num_qubits=0))
         self.circuit_list = circuit_list
         # verify that all circuits are in the library
         for circuit_name in self.circuit_list:
@@ -38,6 +44,14 @@ class CircuitLibrary:
         with open(filename, "r") as f:
             circuit_list = f.read().splitlines()
         return cls(circuit_list)
+
+    @classmethod
+    def from_submodules(cls, submodules):
+        """Initialize the library from a list of submodules."""
+        circuit_list = []
+        for submodule in submodules:
+            circuit_list.extend(submodule._get_all_circuits())
+        return cls(circuit_list, submodules)
 
     def __iter__(self):
         """Return an iterator over QuantumCircuits."""

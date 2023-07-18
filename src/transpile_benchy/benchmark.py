@@ -135,9 +135,16 @@ class Benchmark:
         for circuit_name, result_1 in circuit_results_1.items():
             if circuit_name in circuit_results_2:
                 result_2 = circuit_results_2[circuit_name]
-                change_percentage = (
-                    (result_2.average - result_1.average) / result_1.average
-                ) * 100
+                if result_1.average == 0:
+                    if result_2.average == 0:  # The percentages are equal, no change
+                        change_percentage = 0
+                    else:  # result_1 is zero but result_2 not, ie ~infinite increase
+                        change_percentage = float("inf")
+                else:  # Normal case, result_1.average isn't zero
+                    change_percentage = (
+                        (result_2.average - result_1.average) / result_1.average
+                    ) * 100
+
                 change_percentages.append(change_percentage)
                 percent_changes[circuit_name] = change_percentage
 
@@ -161,27 +168,31 @@ class Benchmark:
             "percent_changes": percent_changes,
         }
 
-    def summary_statistics(self) -> dict:
-        """Calculate statistics for all metrics and all pairs of transpilers.
+    def summary_statistics(self, transpiler_1, transpiler_2) -> dict:
+        """Calculate statistics for all metrics between a pair of transpilers.
+
+        Args:
+            transpiler_1_name (str): Name of the first transpiler.
+            transpiler_2_name (str): Name of the second transpiler.
 
         Returns:
-            dict: A nested dictionary where the first level of keys are metric names,
-                the second level of keys are pairs of transpiler names (as a tuple),
+            dict: A dictionary where the keys are metric names,
                 and the values are calculated statistics for the corresponding metric
-                and pair of transpilers.
+                between the pair of transpilers.
         """
         summary = {}
 
+        if transpiler_1 is None or transpiler_2 is None:
+            raise ValueError("One or both specified transpilers could not be found.")
+
         for metric in self.metrics:
-            summary[metric.name] = {}
-            for i in range(len(self.transpilers)):
-                for j in range(i + 1, len(self.transpilers)):
-                    transpiler_1 = self.transpilers[i]
-                    transpiler_2 = self.transpilers[j]
-                    # calculate/store statistics for this metric on pair of transpilers
-                    summary[metric.name][
-                        (transpiler_1.name, transpiler_2.name)
-                    ] = self._calculate_statistics(metric, transpiler_1, transpiler_2)
+            # calculate/store statistics for this metric on pair of transpilers
+            stats = self._calculate_statistics(metric, transpiler_1, transpiler_2)
+            summary[metric.name] = {
+                "average_change": stats["average_change"],
+                "best_circuit": stats["best_circuit"],
+                "worst_circuit": stats["worst_circuit"],
+            }
 
         return summary
 
