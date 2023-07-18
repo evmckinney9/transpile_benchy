@@ -56,7 +56,10 @@ class CircuitLibrary:
     def get_circuit(self, circuit_name):
         """Return a circuit from the library."""
         # Extract the base name and the number of qubits from the circuit name
+        # some conventions use name_n{num_qubits}, others use name_{num_qubits}
         base_name, num_qubits = circuit_name.rsplit("_", 1)
+        if num_qubits.startswith("n"):
+            num_qubits = num_qubits[1:]
         num_qubits = int(num_qubits)
 
         for interface in self.interfaces:

@@ -39,7 +39,7 @@ class MQTBench(SubmoduleInterface):
                 level="alg",
                 circuit_size=n,
             )
-            qc.name = f"{circuit_str}_{n}"
+            qc.name = f"{circuit_str}_n{n}"
             return qc
         except Exception as e:
             raise CircuitNotFoundError(f"Failed to load {circuit_str}: {e}")

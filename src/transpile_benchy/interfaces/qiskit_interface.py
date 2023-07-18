@@ -37,7 +37,7 @@ class QiskitCircuitInterface(SubmoduleInterface):
             if func.__name__ == circuit_str:
                 n = num_qubits or self.num_qubits
                 temp_qc = func(n)
-                temp_qc.name = f"{circuit_str}_{n}"
+                temp_qc.name = f"{circuit_str}_n{n}"
                 return temp_qc
 
         raise CircuitNotFoundError(f"Circuit {circuit_str} not found.")
