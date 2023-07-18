@@ -20,6 +20,8 @@ from typing import Dict, List, Optional
 # from qiskit.circuit.exceptions import QasmError
 from qiskit import QuantumCircuit
 
+from transpile_benchy.library import CircuitNotFoundError
+
 
 class SubmoduleInterface(Iterator[QuantumCircuit], ABC):
     """Abstract class for a submodule."""
@@ -73,8 +75,12 @@ class SubmoduleInterface(Iterator[QuantumCircuit], ABC):
     @abstractmethod
     def _load_circuit(self, circuit_ir) -> QuantumCircuit:
         """Load a QuantumCircuit from a string."""
-        raise NotImplementedError
+        raise CircuitNotFoundError
 
     def circuit_count(self) -> int:
         """Return total number of QuantumCircuits post-filtering."""
         return len(self.circuits)
+
+    def __len__(self) -> int:
+        """Return total number of QuantumCircuits post-filtering."""
+        return self.circuit_count()

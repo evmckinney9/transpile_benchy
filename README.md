@@ -122,6 +122,7 @@ Implemented:
 - [x] [RedQueen](https://github.com/Qiskit/red-queen/tree/main)
 - [x] [MQTBench](https://github.com/cda-tum/MQTBench)
 - [x] [QUEKO-benchmark](https://github.com/tbcdebug/QUEKO-benchmark)
+- [x] [BQSKit](https://github.com/BQSKit/bqskit)
 - [ ] [Supermarq](https://github.com/Infleqtion/client-superstaq/tree/main/supermarq-benchmarks)
 - [ ] [Revlib](https://www.revlib.org/index.php)
 - [ ] [QC-App-Oriented-Benchmarks](https://github.com/SRI-International/QC-App-Oriented-Benchmarks)

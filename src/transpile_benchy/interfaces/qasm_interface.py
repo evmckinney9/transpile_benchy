@@ -6,6 +6,7 @@ from typing import Dict, List, Optional
 from qiskit import QuantumCircuit
 
 from transpile_benchy.interfaces.abc_interface import SubmoduleInterface
+from transpile_benchy.library import CircuitNotFoundError
 
 
 class QASMInterface(SubmoduleInterface):
@@ -23,18 +24,20 @@ class QASMInterface(SubmoduleInterface):
                 qc.name = circuit_str.stem
             return qc
         except Exception as e:
-            print(f"Failed to load {circuit_str}: {e}")
+            raise CircuitNotFoundError(f"Failed to load {circuit_str}: {e}")
 
 
 class QASMBench(QASMInterface):
     """Submodule for QASMBench circuits."""
 
-    def __init__(self, size: str, filter_config: Optional[Dict[str, List[str]]] = None):
+    def __init__(
+        self, size: str = None, filter_config: Optional[Dict[str, List[str]]] = None
+    ):
         """Initialize QASMBench submodule.
 
         size: 'small', 'medium', or 'large'
         """
-        self.size = size
+        self.size = size or "**"
         if filter_config is None:
             filter_config = {}
         exclude_circuits = filter_config.setdefault("exclude", [])
@@ -60,10 +63,6 @@ class QASMBench(QASMInterface):
 class RedQueen(QASMInterface):
     """Submodule for RedQueen circuits."""
 
-    def __init__(self, filter_config: Optional[Dict[str, List[str]]] = None):
-        """Initialize RedQueen submodule."""
-        super().__init__(filter_config)
-
     def _get_all_circuits(self) -> List[str]:
         """Return a list of all possible circuits."""
         prepath = Path(__file__).resolve().parent.parent.parent.parent
@@ -77,12 +76,20 @@ class Queko(QASMInterface):
     NOTE: Queko is a subset of RedQueen, so we don't need to add it to the library.
     """
 
-    def __init__(self, filter_config: Optional[Dict[str, List[str]]] = None):
-        """Initialize Queko submodule."""
-        super().__init__(filter_config)
-
     def _get_all_circuits(self) -> List[str]:
         """Return a list of all possible circuits."""
         prepath = Path(__file__).resolve().parent.parent.parent.parent
         qasm_files = prepath.glob("submodules/QUEKO-benchmark/BNTF/*.qasm")
+        return list(qasm_files)
+
+
+class BQSKitInterface(QASMInterface):
+    """Submodule for BQSKit circuits."""
+
+    def _get_all_circuits(self) -> List[str]:
+        """Return a list of all possible circuits."""
+        prepath = Path(__file__).resolve().parent.parent.parent.parent
+        qasm_files = prepath.glob(
+            "submodules/bqskit/tests/passes/partitioning/_data/*.qasm"
+        )
         return list(qasm_files)

@@ -1,0 +1,17 @@
+adder_9
+adder_63
+mul_10
+mul_60
+qft_5
+qft_64
+grover_5
+hub_8
+hub_18
+shor_26
+qaoa_12
+tfim_16
+tfim_64
+tfxy_16
+tfxy_64
+qaoa_5
+qaoa_10

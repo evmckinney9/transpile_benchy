@@ -7,3 +7,6 @@
 [submodule "QUEKO-benchmark"]
 	path = submodules/QUEKO-benchmark
 	url = https://github.com/tbcdebug/QUEKO-benchmark
+[submodule "bqskit"]
+	path = bqskit
+	url = https://github.com/BQSKit/bqskit.git

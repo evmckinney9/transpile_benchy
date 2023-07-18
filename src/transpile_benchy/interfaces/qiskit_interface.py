@@ -11,6 +11,7 @@ from qiskit import QuantumCircuit
 
 from transpile_benchy.interfaces.abc_interface import SubmoduleInterface
 from transpile_benchy.interfaces.qiskit_circuits import available_circuits
+from transpile_benchy.library import CircuitNotFoundError
 
 
 class QiskitCircuitInterface(SubmoduleInterface):
@@ -36,7 +37,7 @@ class QiskitCircuitInterface(SubmoduleInterface):
             if func.__name__ == circuit_str:
                 return func(self.num_qubits)
 
-        raise ValueError(f"Circuit {circuit_str} not found.")
+        raise CircuitNotFoundError(f"Circuit {circuit_str} not found.")
 
 
 class QuantumCircuitFactory(SubmoduleInterface):

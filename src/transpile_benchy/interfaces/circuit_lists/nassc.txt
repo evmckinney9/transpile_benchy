@@ -1,0 +1,15 @@
+Grover_n4
+Grover_n6
+Grover_n8
+VQE_n8
+VQE_n12
+BV_n19
+QFT_n15
+QFT_n20
+QPE_n9
+Adder_n10
+Multiplie_n25
+sqn_258
+rd84_253
+co14_215
+sym9_193

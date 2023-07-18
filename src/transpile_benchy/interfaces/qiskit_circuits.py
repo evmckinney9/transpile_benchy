@@ -88,7 +88,7 @@ def qaoa(q):
 # Adder
 def adder(q):
     """Return a ripple carry adder circuit."""
-    adder.__name__ = f"radd_{q}"
+    adder.__name__ = f"adder_{q}"
     if q % 2 != 0:
         raise ValueError("q must be even")
     add_qc = QuantumCircuit(q).compose(
