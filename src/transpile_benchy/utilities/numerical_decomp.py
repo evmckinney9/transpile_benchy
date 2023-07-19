@@ -49,7 +49,6 @@ class CircuitAnsatzDecomposer(ABC):
             target: The unitary target to be decomposed.
             basis_gates: The basis gates to be used in the decomposition.
         """
-        self.num_qubits = target.num_qubits
         self.basis_gates = basis_gates
         # assert that all basis_gates >= 2 qubits
         # assert all([basis_gate[0].num_qubits >= 2 for basis_gate in basis_gates])
@@ -74,9 +73,7 @@ class CircuitAnsatzDecomposer(ABC):
         placement, e.g. don't bother optimizing until some sufficient
         condition of ansatz expressibility is met.
         """
-        # assert target is size of num_qubits
-        # optionally, could fix by padding with identity
-        assert target.num_qubits == self.num_qubits
+        self.num_qubits = target.num_qubits
 
         self.converged = False
         self.parameter_count = 0
@@ -115,7 +112,7 @@ class CircuitAnsatzDecomposer(ABC):
         self, target: UnitaryGate, ansatz: QuantumCircuit
     ) -> QuantumCircuit:
         """Decompose the target, only using the given ansatz."""
-        assert target.num_qubits == ansatz.num_qubits
+        self.num_qubits = target.num_qubits
         self.converged = False
         self.best_cost = None
         for _ in range(self.reinitialize_attempts):
@@ -279,16 +276,9 @@ class HilbertSchmidt(CircuitAnsatzDecomposer):
 class MakhlinFunctional(CircuitAnsatzDecomposer):
     """Use Makhlin functional as the cost function."""
 
-    def __init__(self, **kwargs):
-        """Initialize the MakhlinFunctional class.
-
-        Note that this class is only defined for 2 qubits.
-        """
-        super().__init__(**kwargs)
-        assert self.num_qubits == 2
-
     def _cost_function(self, target: UnitaryGate, x: np.ndarray) -> float:
         """Evaluate the cost function of the decomposition."""
+        assert target.num_qubits == 2, "Makhlin functional only defined for 2 qubits."
         bind_circuit = self.ansatz.assign_parameters(x)
         current_u = Operator(bind_circuit).data
         target_u = Operator(target).data
@@ -327,14 +317,14 @@ if __name__ == "__main__":
     import numpy as np
     from qiskit.circuit.library import RZXGate
 
-    target = QuantumCircuit(2)
+    target_qc = QuantumCircuit(2)
     # target.h(0)
     # target.cx(0, 1)
     # target.cx(1, 2)
 
-    target.rzx(7 * np.pi / 8, 0, 1)
+    target_qc.rzx(7 * np.pi / 8, 0, 1)
     # target.ccx(1, 2, 0)
-    target.rzx(9 * np.pi / 8, 1, 0)
+    target_qc.rzx(9 * np.pi / 8, 1, 0)
 
     # basis gates are tuples of (gate, num_params)
     # NOTE, basis gate is only parameterized if considering a continuous basis set
@@ -342,9 +332,9 @@ if __name__ == "__main__":
     basis_gates = [(RZXGate, 1)]
 
     decomposer = BasicDecomposer(basis_gates)
-    ansatz = decomposer(target)
+    ansatz = decomposer(target_qc)
     print(ansatz)
 
     decomposer = Advanced2QDecomposer(basis_gates)
-    ansatz = decomposer(target)
+    ansatz = decomposer(target_qc)
     print(ansatz)
