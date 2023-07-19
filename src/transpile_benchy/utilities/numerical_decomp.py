@@ -23,16 +23,11 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 from qiskit import QuantumCircuit
-from qiskit.algorithms.optimizers import (
-    L_BFGS_B,
-    NELDER_MEAD,
-    Optimizer,
-    OptimizerResult,
-)
+from qiskit.algorithms.optimizers import NELDER_MEAD, P_BFGS, Optimizer, OptimizerResult
 from qiskit.circuit import Parameter
 from qiskit.circuit.library import UGate
 from qiskit.extensions import UnitaryGate
-from qiskit.quantum_info import Operator
+from qiskit.quantum_info import Operator, average_gate_fidelity
 from weylchamber import J_T_LI
 
 
@@ -40,7 +35,8 @@ class CircuitAnsatzDecomposer(ABC):
     """Abstract base class for circuit ansatz decomposers."""
 
     max_iterations = 8  # maximum number of iterations allowed
-    reinitialize_attempts = 8
+    reinitialize_attempts = 1
+    default_threshold = 1e-6
 
     def __init__(self, basis_gates: list[UnitaryGate]):
         """Initialize the CircuitAnsatzDecomposer class.
@@ -54,7 +50,6 @@ class CircuitAnsatzDecomposer(ABC):
         # assert all([basis_gate[0].num_qubits >= 2 for basis_gate in basis_gates])
 
         self.optimizer: Optimizer = None
-        self.convergence_threshold = 1e-6
 
     def __call__(
         self, target: UnitaryGate, ansatz: QuantumCircuit = None
@@ -109,7 +104,10 @@ class CircuitAnsatzDecomposer(ABC):
             self.ansatz.append(UGate(*u_params), [i])
 
     def decompose_from_ansatz(
-        self, target: UnitaryGate, ansatz: QuantumCircuit
+        self,
+        target: UnitaryGate,
+        ansatz: QuantumCircuit,
+        convergence_threshold: float = None,
     ) -> QuantumCircuit:
         """Decompose the target, only using the given ansatz."""
         self.num_qubits = target.num_qubits
@@ -118,6 +116,7 @@ class CircuitAnsatzDecomposer(ABC):
         self.ansatz = ansatz
         self.parameter_values = []
         self.parameter_count = len(ansatz.parameters)
+        self.convergence_threshold = convergence_threshold or self.default_threshold
         for _ in range(self.reinitialize_attempts):
             self._optimize_parameters(target)
             if self.converged:
@@ -258,7 +257,7 @@ class HilbertSchmidt(CircuitAnsatzDecomposer):
         """Evaluate the cost function of the decomposition."""
         bind_circuit = self.ansatz.assign_parameters(x)
         current_u = Operator(bind_circuit).data
-        target_unitary = Operator(target.inverse()).data
+        target_unitary = Operator(target).data
         return self._hilbert_schmidt_cost(target_unitary, current_u)
 
     def _hilbert_schmidt_cost(
@@ -273,7 +272,20 @@ class HilbertSchmidt(CircuitAnsatzDecomposer):
             [4] https://mrmgroup.cs.princeton.edu/papers/pmurali-isca21.pdf
         """
         dim = target_unitary.shape[0]
-        return 1 - np.abs(np.trace(current_unitary @ target_unitary)) / dim
+        return (
+            1 - np.abs(np.trace(current_unitary @ np.matrix.getH(target_unitary))) / dim
+        )
+
+
+class Infidelity(CircuitAnsatzDecomposer):
+    """Use Hilbert-Schmidt distance as the cost function."""
+
+    def _cost_function(self, target: UnitaryGate, x: np.ndarray) -> float:
+        """Evaluate the cost function of the decomposition."""
+        bind_circuit = self.ansatz.assign_parameters(x)
+        current_op = Operator(bind_circuit)
+        target_op = Operator(target)
+        return 1 - average_gate_fidelity(current_op, target_op)
 
 
 class MakhlinFunctional(CircuitAnsatzDecomposer):
@@ -294,13 +306,13 @@ class MakhlinFunctional(CircuitAnsatzDecomposer):
         return J_T_LI(target_unitary, current_unitary)
 
 
-class BasicDecomposer(LinearAnsatz, HilbertSchmidt):
+class BasicDecomposer(LinearAnsatz, Infidelity):
     """Basic decomposition class."""
 
     def __init__(self, basis_gates: list[UnitaryGate]):
         """Initialize the Basic class."""
         super().__init__(basis_gates=basis_gates)
-        self.optimizer = L_BFGS_B()
+        self.optimizer = P_BFGS()
         self.basis_gate_index = 0
         self.edge_index = 0
 
