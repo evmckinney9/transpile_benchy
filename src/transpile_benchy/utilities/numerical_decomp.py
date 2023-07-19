@@ -301,7 +301,7 @@ class MakhlinFunctional(CircuitAnsatzDecomposer):
         return J_T_LI(target_unitary, current_unitary)
 
 
-class Basic(LinearAnsatz, HilbertSchmidt):
+class BasicDecomposer(LinearAnsatz, HilbertSchmidt):
     """Basic decomposition class."""
 
     def __init__(self, basis_gates: list[UnitaryGate]):
@@ -312,7 +312,7 @@ class Basic(LinearAnsatz, HilbertSchmidt):
         self.edge_index = 0
 
 
-class Advanced(LinearAnsatz, MakhlinFunctional):
+class Advanced2QDecomposer(LinearAnsatz, MakhlinFunctional):
     """Advanced decomposition class."""
 
     def __init__(self, basis_gates: list[UnitaryGate]):
@@ -341,10 +341,10 @@ if __name__ == "__main__":
     # basis_gates = [(RZXGate, 1), (CCXGate, 0)]
     basis_gates = [(RZXGate, 1)]
 
-    decomposer = Basic(basis_gates)
+    decomposer = BasicDecomposer(basis_gates)
     ansatz = decomposer(target)
     print(ansatz)
 
-    decomposer = Advanced(basis_gates)
+    decomposer = Advanced2QDecomposer(basis_gates)
     ansatz = decomposer(target)
     print(ansatz)
