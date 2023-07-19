@@ -39,6 +39,9 @@ from weylchamber import J_T_LI
 class CircuitAnsatzDecomposer(ABC):
     """Abstract base class for circuit ansatz decomposers."""
 
+    max_iterations = 8  # maximum number of iterations allowed
+    reinitialize_attempts = 8
+
     def __init__(self, basis_gates: list[UnitaryGate]):
         """Initialize the CircuitAnsatzDecomposer class.
 
@@ -54,8 +57,12 @@ class CircuitAnsatzDecomposer(ABC):
         self.optimizer: Optimizer = None
         self.convergence_threshold = 1e-6
 
-    def __call__(self, target: UnitaryGate) -> QuantumCircuit:
+    def __call__(
+        self, target: UnitaryGate, ansatz: QuantumCircuit = None
+    ) -> QuantumCircuit:
         """Decompose the target unitary using the basis gates."""
+        if ansatz is not None:
+            return self.decompose_from_ansatz(target, ansatz)
         return self.decompose(target)
 
     def decompose(self, target: UnitaryGate) -> QuantumCircuit:
@@ -75,18 +82,19 @@ class CircuitAnsatzDecomposer(ABC):
         self.parameter_count = 0
         self.parameter_values = []
         self.best_cost = None
-        max_iterations = 8  # maximum number of iterations allowed
 
         self.ansatz = QuantumCircuit(self.num_qubits)
         self._initialize_1Q_gates()
 
         iterations = 0
-        while not self.converged and iterations < max_iterations:
+        while not self.converged and iterations < self.max_iterations:
             self._iterate_basis()
             for _ in range(
-                10
+                self.reinitialize_attempts
             ):  # number of times to reinitialize and train on a fixed size template
                 ret = self._optimize_parameters(target)
+                if self.converged:
+                    break
             iterations += 1
 
         print("Final cost: ", ret.fun)
@@ -102,6 +110,22 @@ class CircuitAnsatzDecomposer(ABC):
             ]
             self.parameter_count += 3
             self.ansatz.append(UGate(*u_params), [i])
+
+    def decompose_from_ansatz(
+        self, target: UnitaryGate, ansatz: QuantumCircuit
+    ) -> QuantumCircuit:
+        """Decompose the target, only using the given ansatz."""
+        assert target.num_qubits == ansatz.num_qubits
+        self.converged = False
+        self.best_cost = None
+        for _ in range(self.reinitialize_attempts):
+            ret = self._optimize_parameters(target, ansatz)
+            if self.converged:
+                break
+
+        print("Final cost: ", ret.fun)
+        # bind the parameters to the circuit
+        return ansatz.assign_parameters(self.parameter_values)
 
     @abstractmethod
     def _iterate_basis(self) -> None:
