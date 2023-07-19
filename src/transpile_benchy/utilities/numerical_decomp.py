@@ -115,8 +115,9 @@ class CircuitAnsatzDecomposer(ABC):
         self.num_qubits = target.num_qubits
         self.converged = False
         self.best_cost = None
+        self.ansatz = ansatz
         for _ in range(self.reinitialize_attempts):
-            ret = self._optimize_parameters(target, ansatz)
+            ret = self._optimize_parameters(target)
             if self.converged:
                 break
 
