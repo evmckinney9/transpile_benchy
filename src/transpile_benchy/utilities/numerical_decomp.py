@@ -89,12 +89,12 @@ class CircuitAnsatzDecomposer(ABC):
             for _ in range(
                 self.reinitialize_attempts
             ):  # number of times to reinitialize and train on a fixed size template
-                ret = self._optimize_parameters(target)
+                self._optimize_parameters(target)
                 if self.converged:
                     break
             iterations += 1
 
-        print("Final cost: ", ret.fun)
+        # print("Final cost: ", ret.fun)
         # bind the parameters to the circuit
         return self.ansatz.assign_parameters(self.parameter_values)
 
@@ -117,13 +117,13 @@ class CircuitAnsatzDecomposer(ABC):
         self.best_cost = None
         self.ansatz = ansatz
         self.parameter_values = []
-        self.parameter_count = ansatz.parameters.num_parameters
+        self.parameter_count = len(ansatz.parameters)
         for _ in range(self.reinitialize_attempts):
-            ret = self._optimize_parameters(target)
+            self._optimize_parameters(target)
             if self.converged:
                 break
 
-        print("Final cost: ", ret.fun)
+        # print("Final cost: ", ret.fun)
         # bind the parameters to the circuit
         return ansatz.assign_parameters(self.parameter_values)
 
