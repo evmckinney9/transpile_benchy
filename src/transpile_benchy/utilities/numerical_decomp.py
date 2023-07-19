@@ -116,6 +116,8 @@ class CircuitAnsatzDecomposer(ABC):
         self.converged = False
         self.best_cost = None
         self.ansatz = ansatz
+        self.parameter_values = []
+        self.parameter_count = ansatz.parameters.num_parameters
         for _ in range(self.reinitialize_attempts):
             ret = self._optimize_parameters(target)
             if self.converged:
