@@ -1,4 +1,5 @@
 """QASM submodule interface."""
+import re
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -107,4 +108,10 @@ class BQSKitInterface(QASMInterface):
         qasm_files = prepath.glob(
             "submodules/bqskit/tests/passes/partitioning/_data/*.qasm"
         )
-        return {file.stem: str(file) for file in qasm_files}
+
+        def conventional_filename(stem):
+            return (
+                f"{re.findall('[a-zA-Z]+', stem)[0]}_n{re.findall('[0-9]+$', stem)[0]}"
+            )
+
+        return {conventional_filename(file.stem): str(file) for file in qasm_files}

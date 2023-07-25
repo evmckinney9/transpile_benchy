@@ -74,6 +74,7 @@ class CircuitLibrary:
         base_name, num_qubits = circuit_name.rsplit("_", 1)
         if num_qubits.startswith("n"):
             num_qubits = num_qubits[1:]
+        circuit_name = f"{base_name}_n{num_qubits}"  # enforce qasm name convention
         num_qubits = int(num_qubits)
 
         for interface in self.interfaces:
