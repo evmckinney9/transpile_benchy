@@ -313,6 +313,7 @@ class BasicDecomposer(LinearAnsatz, Infidelity):
         """Initialize the Basic class."""
         super().__init__(basis_gates=basis_gates)
         self.optimizer = P_BFGS()
+        # self.optimizer = L_BFGS_B()
         self.basis_gate_index = 0
         self.edge_index = 0
 

@@ -57,7 +57,7 @@ class Benchmark:
             return False
         if "square_root" in circuit.name:
             return False
-        return circuit.depth() <= 800 and circuit.num_qubits <= 36
+        return circuit.depth() <= 1200 and circuit.num_qubits <= 64
 
     def _try_transpilation(self, transpiler, circuit, run_index):
         """Attempt to transpile, returns transpiled circuit or raises Error."""
