@@ -36,7 +36,7 @@ class CircuitAnsatzDecomposer(ABC):
 
     max_iterations = 8  # maximum number of iterations allowed
     reinitialize_attempts = 1
-    default_threshold = 1e-6
+    default_threshold = 1e-8
 
     def __init__(self, basis_gates: list[UnitaryGate]):
         """Initialize the CircuitAnsatzDecomposer class.
