@@ -83,7 +83,7 @@ class Benchmark:
     def run_single_circuit(self, circuit: QuantumCircuit):
         """Run a benchmark on a single circuit."""
         if self.logger:
-            self.logger.debug(f"Running benchmark for circuit {circuit.name}")
+            self.logger.info(f"Running benchmark for circuit {circuit.name}")
         for transpiler in self.transpilers:
             for run_index in range(self.num_runs):
                 transpiled_circuit = self._try_transpilation(
@@ -121,6 +121,11 @@ class Benchmark:
         Returns:
             dict: A dictionary containing the summary statistics.
                 - 'average_change': Average change of metric compared to baseline (%).
+                This approach calculates the relative change for each benchmark and
+                then averages these values.
+                - 'aggregate_change': Aggr. change of metric compared to baseline (%).
+                This approach first aggregates the metric values over all benchmarks and
+                then calculates the relative change.
                 - 'best_circuit': The circuit that had the best improvement.
                 - 'worst_circuit': The circuit that had the worst improvement.
                 - 'percent_changes': Dict mapping circuit names to % changes.
@@ -139,14 +144,21 @@ class Benchmark:
         change_percentages = []
         percent_changes = {}
 
+        total_1 = 0  # Initialize total value for transpiler_1
+        total_2 = 0  # Initialize total value for transpiler_2
+
         for circuit_name, result_1 in circuit_results_1.items():
             if circuit_name in circuit_results_2:
                 result_2 = circuit_results_2[circuit_name]
+                total_1 += result_1.average
+                total_2 += result_2.average
+
                 if result_1.average == 0:
                     if result_2.average == 0:  # The percentages are equal, no change
                         change_percentage = 0
                     else:  # result_1 is zero but result_2 not, ie ~infinite increase
                         change_percentage = float("inf")
+
                 else:  # Normal case, result_1.average isn't zero
                     change_percentage = (
                         (result_2.average - result_1.average) / result_1.average
@@ -155,7 +167,11 @@ class Benchmark:
                 change_percentages.append(change_percentage)
                 percent_changes[circuit_name] = change_percentage
 
+        # Calculate average change and aggregate change
         average_change = sum(change_percentages) / len(change_percentages)
+        aggregate_change = (
+            ((total_2 - total_1) / total_1) * 100 if total_1 != 0 else float("inf")
+        )
 
         if metric.is_lower_better:
             # If lower is better, the best circuit has the most negative change
@@ -170,6 +186,7 @@ class Benchmark:
 
         return {
             "average_change": average_change,
+            "aggregate_change": aggregate_change,
             "best_circuit": best_circuit,
             "worst_circuit": worst_circuit,
             "percent_changes": percent_changes,
@@ -197,6 +214,7 @@ class Benchmark:
             stats = self._calculate_statistics(metric, transpiler_1, transpiler_2)
             summary[metric.name] = {
                 "average_change": stats["average_change"],
+                "aggregrate_change": stats["aggregate_change"],
                 "best_circuit": stats["best_circuit"],
                 "worst_circuit": stats["worst_circuit"],
             }

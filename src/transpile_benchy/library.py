@@ -28,7 +28,10 @@ class CircuitLibrary:
             self.interfaces.append(MQTBench(num_qubits=0))
             self.interfaces.append(BQSKitInterface())
             self.interfaces.append(QiskitCircuitInterface(num_qubits=0))
+
         self.circuit_list = circuit_list
+        # TODO enforce naming convention here instead of later
+
         # verify that all circuits are in the library
         for circuit_name in self.circuit_list:
             if not any(circuit_name in interface for interface in self.interfaces):

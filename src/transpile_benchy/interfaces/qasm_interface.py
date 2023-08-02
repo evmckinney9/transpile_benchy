@@ -83,7 +83,22 @@ class RedQueen(QASMInterface):
         """Return a list of all possible circuits."""
         prepath = Path(__file__).resolve().parent.parent.parent.parent
         qasm_files = prepath.glob("submodules/red-queen/red_queen/games/**/*.qasm")
-        return {file.stem: str(file) for file in qasm_files}
+
+        # # specific to this interface - need to change _{x} to _n{x} in file names
+        # if doesn't have a '_', then return the original name
+        # NOTE: files may have multiple '_'s, but we only care about the last one
+        def conventional_filename(stem):
+            parts = stem.rsplit(
+                "_", 1
+            )  # split the stem from the right at the first underscore
+            if len(parts) == 1:
+                # If there is no underscore, return the original name
+                return stem
+            else:
+                # Insert _n between the last two parts
+                return "_n".join(parts)
+
+        return {conventional_filename(file.stem): str(file) for file in qasm_files}
 
 
 class Queko(QASMInterface):

@@ -1,6 +1,6 @@
 """Render module for transpile_benchy."""
 
-from typing import Tuple
+from typing import List, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -75,12 +75,22 @@ def _plot_trendline(
         ax.plot(x_data, line, color=cmap(j), linestyle="dashed")
 
 
-def _plot_legend(axs: Axes, metric: MetricInterface, cmap) -> None:
+def _plot_legend(
+    axs: Axes, metric: MetricInterface, cmap, override_legend=None
+) -> None:
     """Plot the legend on the given axes."""
     for j, transpiler_name in enumerate(metric.saved_results.keys()):
+        if override_legend is not None:
+            transpiler_name = override_legend[j]
         axs[0].bar(0, 0, color=cmap(j), label=f"{transpiler_name}")
 
-    axs[0].legend(loc="center", ncol=2, fontsize=8, frameon=False)
+    axs[0].legend(
+        loc="upper center",
+        ncol=3,
+        fontsize=8,
+        frameon=False,
+        bbox_to_anchor=(0.5, 1.10),
+    )
     axs[0].axis("off")
 
 
@@ -100,7 +110,7 @@ def _configure_plot(
 
     max_fontsize = 10
     min_fontsize = 8
-    font_size = max(
+    max(
         min(max_fontsize, 800 // len(sorted_results)),
         min_fontsize,
     )
@@ -120,11 +130,11 @@ def _configure_plot(
         [x[0] for x in sorted_results],  # Use sorted keys
         rotation=30,
         ha="right",
-        fontsize=font_size,
+        fontsize=7,
     )
 
     # Ensure y-axis has at least two ticks
-    ax.yaxis.set_major_locator(MaxNLocator(nbins=3))
+    ax.yaxis.set_major_locator(MaxNLocator(nbins=5))
 
     # Set the y-axis tick labels to use fixed point notation
     ax.ticklabel_format(axis="y", style="plain")
@@ -139,9 +149,10 @@ def plot_benchmark(
     save: bool = False,
     filename: str = "",
     plot_type: str = "bar",
+    override_legend: List[str] = None,
 ) -> None:
     """Plot benchmark results."""
-    with plt.style.context(["ipynb", "colorsblind10"]):
+    with plt.style.context(["ieee"]):
         plt.rcParams["text.usetex"] = True
 
         for metric in benchmark.metrics:
@@ -153,9 +164,9 @@ def plot_benchmark(
             # XXX manually adjust as needed
             # Adjust bar width according to number of transpilers
             transpiler_count = len(metric.saved_results.keys())
-            bar_width = 2.0 / transpiler_count
+            bar_width = 2.5 / transpiler_count
 
-            cmap = plt.cm.get_cmap("tab10", transpiler_count)
+            cmap = plt.cm.get_cmap("tab10", 10)  # transpiler_count)
 
             sorted_results = metric.prepare_plot_data()
 
@@ -181,10 +192,17 @@ def plot_benchmark(
                 )
 
             if legend_show:
-                _plot_legend(fig.axes, metric, cmap)
+                _plot_legend(fig.axes, metric, cmap, override_legend)
 
             plt.show()
 
-            if save:
-                # fig.savefig(f"{metric.name}_benchmark.svg", dpi=300)
-                fig.savefig(f"{filename}_{metric.name}_benchmark.svg", dpi=300)
+            if save and metric == benchmark.metrics[0]:
+                # # fig.savefig(f"{metric.name}_benchmark.svg", dpi=300)
+                # fig.savefig(f"{filename}_{metric.name}_benchmark.svg", dpi=300)
+                # save fig with no cropping
+                fig.savefig(
+                    f"{filename}_{metric.name}_benchmark.pdf",
+                    bbox_inches="tight",
+                    pad_inches=0,
+                )
+                # fig.savefig(f"{filename}_{metric.name}_benchmark.pdf")

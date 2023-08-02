@@ -19,7 +19,7 @@ from qiskit.circuit.library.arithmetic.adders.cdkm_ripple_carry_adder import (
 from qiskit.circuit.library.arithmetic.multipliers import RGQFTMultiplier
 from qiskit.circuit.library.basis_change import QFT
 
-depth = 2  # arbitary idk what to set this to
+depth = 4  # arbitary idk what to set this to
 
 
 # VQE
@@ -40,7 +40,7 @@ def vqe_full(q):
     """Return a VQE circuit with full entanglement."""
     # set np random seed
     # np.random.seed(42)
-    vqe_circuit_full = EfficientSU2(num_qubits=q, entanglement="full")
+    vqe_circuit_full = EfficientSU2(num_qubits=q, entanglement="full", reps=depth * 2)
     for param in vqe_circuit_full.parameters:
         vqe_circuit_full.assign_parameters({param: np.random.rand()}, inplace=1)
     return vqe_circuit_full
