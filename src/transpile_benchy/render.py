@@ -2,8 +2,11 @@
 
 from typing import List, Tuple
 
+import LovelyPlots.utils as lp  # noqa: F401
 import matplotlib.pyplot as plt
 import numpy as np
+import scienceplots  # noqa: F401
+from matplotlib.colors import ListedColormap
 from matplotlib.figure import Axes, Figure
 from matplotlib.ticker import MaxNLocator
 
@@ -17,13 +20,17 @@ from transpile_benchy.metrics.abc_metrics import MetricInterface
 def _initialize_plot(legend_show: bool) -> Tuple[Figure, Axes]:
     """Initialize the plot and returns the fig and ax."""
     ref_size = 1.25  # Assume need .4 for legend
+    legend_offset = 0.4
     if legend_show:
         fig, axs = plt.subplots(
             2,
-            figsize=(3.5, ref_size + 0.4),  # 2 inch for plot + 1 inch for legend
+            figsize=(
+                3.5,
+                ref_size + legend_offset,
+            ),  # 2 inch for plot + 1 inch for legend
             sharex=True,
             gridspec_kw={
-                "height_ratios": [0.4, ref_size + 0.4],
+                "height_ratios": [legend_offset, ref_size + legend_offset],
                 "hspace": 0.01,
             },  # 1:2 ratio for legend:plot
         )
@@ -86,10 +93,10 @@ def _plot_legend(
 
     axs[0].legend(
         loc="upper center",
-        ncol=3,
+        ncol=2,
         fontsize=8,
         frameon=False,
-        bbox_to_anchor=(0.5, 1.10),
+        bbox_to_anchor=(0.5, 1.5),  # 1.10
     )
     axs[0].axis("off")
 
@@ -150,6 +157,8 @@ def plot_benchmark(
     filename: str = "",
     plot_type: str = "bar",
     override_legend: List[str] = None,
+    color_override: List[int] = None,
+    auto_sort=True,
 ) -> None:
     """Plot benchmark results."""
     with plt.style.context(["ieee"]):
@@ -164,11 +173,17 @@ def plot_benchmark(
             # XXX manually adjust as needed
             # Adjust bar width according to number of transpilers
             transpiler_count = len(metric.saved_results.keys())
-            bar_width = 2.5 / transpiler_count
+            bar_width = 3 / transpiler_count  # 1.8
 
             cmap = plt.cm.get_cmap("tab10", 10)  # transpiler_count)
+            if color_override is not None:
+                assert transpiler_count == len(color_override)
+                # set cmap to use indices from color_override
+                # e.g. if [0,3] then cmap(0) := cmap(0) and cmap(1) := cmap(3)
+                colors = [cmap(i) for i in color_override]
+                cmap = ListedColormap(colors)
 
-            sorted_results = metric.prepare_plot_data()
+            sorted_results = metric.prepare_plot_data(auto_sort)
 
             if plot_type == "bar":
                 _plot_bars(ax, cmap, sorted_results, transpiler_count, bar_width)

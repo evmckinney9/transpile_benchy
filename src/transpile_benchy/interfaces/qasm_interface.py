@@ -84,6 +84,9 @@ class RedQueen(QASMInterface):
         prepath = Path(__file__).resolve().parent.parent.parent.parent
         qasm_files = prepath.glob("submodules/red-queen/red_queen/games/**/*.qasm")
 
+        # exclude red_queen/games/mapping/benchmarks/queko
+        qasm_files = filter(lambda file: "queko" not in str(file), qasm_files)
+
         # # specific to this interface - need to change _{x} to _n{x} in file names
         # if doesn't have a '_', then return the original name
         # NOTE: files may have multiple '_'s, but we only care about the last one
@@ -102,10 +105,7 @@ class RedQueen(QASMInterface):
 
 
 class Queko(QASMInterface):
-    """Submodule for Queko circuits.
-
-    NOTE: Queko is a subset of RedQueen, so we don't need to add it to the library.
-    """
+    """Submodule for Queko circuits."""
 
     def _get_path_dict(self) -> Dict[str, str]:
         """Return a list of all possible circuits."""

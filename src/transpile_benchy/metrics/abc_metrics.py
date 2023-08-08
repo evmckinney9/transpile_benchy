@@ -124,7 +124,7 @@ class MetricInterface(ABC):
         """Get a result from the saved results."""
         return self.saved_results[transpiler.name][circuit_name]
 
-    def prepare_plot_data(self):
+    def prepare_plot_data(self, auto_sort=True):
         """Sort and parse the result dictionary for plotting."""
         result_dict = {}
 
@@ -134,11 +134,14 @@ class MetricInterface(ABC):
                     result_dict[circuit_name] = []
                 result_dict[circuit_name].append((transpiler_name, result))
 
-        # Sort by the average result of the first transpiler
-        sorted_results = sorted(
-            result_dict.items(),
-            key=lambda x: x[1][0][1].average,
-        )
+        if auto_sort:
+            # Sort by the average result of the first transpiler
+            sorted_results = sorted(
+                result_dict.items(),
+                key=lambda x: x[1][0][1].average,
+            )
+        else:
+            sorted_results = result_dict.items()
 
         return sorted_results
 
