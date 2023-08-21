@@ -38,14 +38,16 @@ class CircuitAnsatzDecomposer(ABC):
     reinitialize_attempts = 1
     default_threshold = 1e-8
 
-    def __init__(self, basis_gates: list[UnitaryGate]):
+    def __init__(self, basis_gates: list[UnitaryGate], include_1q=True):
         """Initialize the CircuitAnsatzDecomposer class.
 
         Args:
             target: The unitary target to be decomposed.
             basis_gates: The basis gates to be used in the decomposition.
+            include_1q: (True) Whether to include interleaving 1Q gates in the ansatz.
         """
         self.basis_gates = basis_gates
+        self.include_1q = include_1q
         # assert that all basis_gates >= 2 qubits
         # assert all([basis_gate[0].num_qubits >= 2 for basis_gate in basis_gates])
 
@@ -76,7 +78,8 @@ class CircuitAnsatzDecomposer(ABC):
         self.best_cost = None
 
         self.ansatz = QuantumCircuit(self.num_qubits)
-        self._initialize_1Q_gates()
+        if self.include_1q:
+            self._initialize_1Q_gates()
 
         iterations = 0
         while not self.converged and iterations < self.max_iterations:
@@ -235,13 +238,14 @@ class LinearAnsatz(CircuitAnsatzDecomposer):
         self.ansatz.append(basis_gate, edge_indices)
 
         # append 1Q gates to all qubits the basis gate was just on
-        for i in edge_indices:
-            u_params = [
-                Parameter(f"p{i:03}")
-                for i in range(self.parameter_count, self.parameter_count + 3)
-            ]
-            self.parameter_count += 3
-            self.ansatz.append(UGate(*u_params), [i])
+        if self.include_1q:
+            for i in edge_indices:
+                u_params = [
+                    Parameter(f"p{i:03}")
+                    for i in range(self.parameter_count, self.parameter_count + 3)
+                ]
+                self.parameter_count += 3
+                self.ansatz.append(UGate(*u_params), [i])
 
         # wrap index around for linear placement
         self.basis_gate_index += 1
