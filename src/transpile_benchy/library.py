@@ -3,7 +3,8 @@
 from typing import List
 
 from transpile_benchy.interfaces.abc_interface import SubmoduleInterface
-from transpile_benchy.interfaces.mqt_interface import MQTBench
+
+# from transpile_benchy.interfaces.mqt_interface import MQTBench
 from transpile_benchy.interfaces.qasm_interface import (
     BQSKitInterface,
     QASMBench,
@@ -16,7 +17,9 @@ class CircuitLibrary:
     """A class to handle the library of circuits."""
 
     def __init__(
-        self, circuit_list: List[str], interfaces: List[SubmoduleInterface] = None
+        self,
+        circuit_list: List[str],
+        interfaces: List[SubmoduleInterface] = None,
     ):
         """Initialize the library."""
         if interfaces:
@@ -25,7 +28,7 @@ class CircuitLibrary:
             self.interfaces = []
             self.interfaces.append(QASMBench())
             self.interfaces.append(RedQueen())
-            self.interfaces.append(MQTBench(num_qubits=0))
+            # self.interfaces.append(MQTBench(num_qubits=0))
             self.interfaces.append(BQSKitInterface())
             self.interfaces.append(QiskitCircuitInterface(num_qubits=0))
 
@@ -34,8 +37,12 @@ class CircuitLibrary:
 
         # verify that all circuits are in the library
         for circuit_name in self.circuit_list:
-            if not any(circuit_name in interface for interface in self.interfaces):
-                raise ValueError(f"Circuit '{circuit_name}' not found in any interface")
+            if not any(
+                circuit_name in interface for interface in self.interfaces
+            ):
+                raise ValueError(
+                    f"Circuit '{circuit_name}' not found in any interface"
+                )
 
     def circuit_count(self) -> int:
         """Return the number of circuits in the library."""
@@ -77,17 +84,25 @@ class CircuitLibrary:
         base_name, num_qubits = circuit_name.rsplit("_", 1)
         if num_qubits.startswith("n"):
             num_qubits = num_qubits[1:]
-        circuit_name = f"{base_name}_n{num_qubits}"  # enforce qasm name convention
+        circuit_name = (
+            f"{base_name}_n{num_qubits}"  # enforce qasm name convention
+        )
         num_qubits = int(num_qubits)
 
         for interface in self.interfaces:
             if circuit_name in interface:
                 if interface.dynamic:
-                    print(f"Loading {circuit_name} from {interface.__class__.__name__}")
+                    print(
+                        f"Loading {circuit_name} from {interface.__class__.__name__}"
+                    )
                     return interface._load_circuit(base_name, num_qubits)
                 else:
-                    print(f"Loading {circuit_name} from {interface.__class__.__name__}")
+                    print(
+                        f"Loading {circuit_name} from {interface.__class__.__name__}"
+                    )
                     return interface._load_circuit(circuit_name)
             else:
                 pass  # don't use continue, since this is subroutine of generator
-        raise ValueError(f"Circuit '{circuit_name}' not found in any interface")
+        raise ValueError(
+            f"Circuit '{circuit_name}' not found in any interface"
+        )
