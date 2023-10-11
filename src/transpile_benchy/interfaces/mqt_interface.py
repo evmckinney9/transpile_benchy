@@ -36,13 +36,6 @@ class MQTBench(SubmoduleInterface):
         self, circuit_str: str, num_qubits=None
     ) -> QuantumCircuit:
         """Load a QuantumCircuit from a string."""
-
-        # hardcoded this one since slow to load
-        if circuit_str == "portfolioqaoa" and num_qubits == 16:
-            prepath = Path(__file__).resolve().parent
-            file = str(prepath) + "/circuit_lists/portfolioqaoa_n16.qasm"
-            return QuantumCircuit.from_qasm_file(str(file))
-
         try:
             n = num_qubits or self.num_qubits
             qc = get_benchmark(

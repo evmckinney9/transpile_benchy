@@ -165,7 +165,7 @@ from qiskit.quantum_info.operators import Operator
 ecp = QuantumCircuit(2)
 ecp.append(iSwapGate().power(1 / 2), [0, 1])
 ecp.swap(0, 1)
-ecp = ecp.to_instruction()
+ecp = ecp.to_gate()
 
 
 def two_local_function_generator(entanglement_gate, func_name):

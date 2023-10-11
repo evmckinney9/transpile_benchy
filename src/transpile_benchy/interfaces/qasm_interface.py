@@ -14,7 +14,9 @@ from transpile_benchy.interfaces.errors import CircuitNotFoundError
 class QASMInterface(SubmoduleInterface, ABC):
     """Abstract class for a submodule that has QASM files."""
 
-    def __init__(self, filter_config: Optional[Dict[str, List[str]]] = None) -> None:
+    def __init__(
+        self, filter_config: Optional[Dict[str, List[str]]] = None
+    ) -> None:
         """Initialize QASM submodule."""
         self.path_dict = self._get_path_dict()
         super().__init__(filter_config)
@@ -43,11 +45,23 @@ class QASMInterface(SubmoduleInterface, ABC):
         raise NotImplementedError
 
 
+class Hardcoded(QASMInterface):
+    """Submodule for QASM files I manually loaded into interfaces/hardcoded/."""
+
+    def _get_path_dict(self) -> Dict[str, str]:
+        """Return a list of all possible circuits."""
+        prepath = Path(__file__).resolve().parent
+        qasm_files = prepath.glob("hardcoded/*.qasm")
+        return {file.stem: str(file) for file in qasm_files}
+
+
 class QASMBench(QASMInterface):
     """Submodule for QASMBench circuits."""
 
     def __init__(
-        self, size: str = None, filter_config: Optional[Dict[str, List[str]]] = None
+        self,
+        size: str = None,
+        filter_config: Optional[Dict[str, List[str]]] = None,
     ):
         """Initialize QASMBench submodule.
 
@@ -70,9 +84,13 @@ class QASMBench(QASMInterface):
     def _get_path_dict(self) -> Dict[str, str]:
         """Return a dictionary mapping circuit names to their file paths."""
         prepath = Path(__file__).resolve().parent.parent.parent.parent
-        qasm_files = prepath.glob(f"submodules/QASMBench/{self.size}/**/*.qasm")
+        qasm_files = prepath.glob(
+            f"submodules/QASMBench/{self.size}/**/*.qasm"
+        )
         # specific to this interface - filter out the transpiled files
-        qasm_files = filter(lambda file: "_transpiled" not in str(file), qasm_files)
+        qasm_files = filter(
+            lambda file: "_transpiled" not in str(file), qasm_files
+        )
         return {file.stem: str(file) for file in qasm_files}
 
 
@@ -82,7 +100,9 @@ class RedQueen(QASMInterface):
     def _get_path_dict(self) -> Dict[str, str]:
         """Return a list of all possible circuits."""
         prepath = Path(__file__).resolve().parent.parent.parent.parent
-        qasm_files = prepath.glob("submodules/red-queen/red_queen/games/**/*.qasm")
+        qasm_files = prepath.glob(
+            "submodules/red-queen/red_queen/games/**/*.qasm"
+        )
 
         # exclude red_queen/games/mapping/benchmarks/queko
         qasm_files = filter(lambda file: "queko" not in str(file), qasm_files)
@@ -101,7 +121,9 @@ class RedQueen(QASMInterface):
                 # Insert _n between the last two parts
                 return "_n".join(parts)
 
-        return {conventional_filename(file.stem): str(file) for file in qasm_files}
+        return {
+            conventional_filename(file.stem): str(file) for file in qasm_files
+        }
 
 
 class Queko(QASMInterface):
@@ -125,8 +147,8 @@ class BQSKitInterface(QASMInterface):
         )
 
         def conventional_filename(stem):
-            return (
-                f"{re.findall('[a-zA-Z]+', stem)[0]}_n{re.findall('[0-9]+$', stem)[0]}"
-            )
+            return f"{re.findall('[a-zA-Z]+', stem)[0]}_n{re.findall('[0-9]+$', stem)[0]}"
 
-        return {conventional_filename(file.stem): str(file) for file in qasm_files}
+        return {
+            conventional_filename(file.stem): str(file) for file in qasm_files
+        }
