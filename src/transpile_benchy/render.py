@@ -36,12 +36,18 @@ def _initialize_plot(legend_show: bool) -> Tuple[Figure, Axes]:
         )
         ax = axs[1]
     else:
-        fig, ax = plt.subplots(figsize=(3.5, ref_size))  # Just 2 inch for the plot
+        fig, ax = plt.subplots(
+            figsize=(3.5, ref_size)
+        )  # Just 2 inch for the plot
     return fig, ax
 
 
 def _plot_bars(
-    ax: Axes, cmap, sorted_results: list, transpiler_count: int, bar_width: float
+    ax: Axes,
+    cmap,
+    sorted_results: list,
+    transpiler_count: int,
+    bar_width: float,
 ) -> None:
     """Plot a bar for each circuit and each transpiler."""
     for i, (circuit_name, circuit_results) in enumerate(sorted_results):
@@ -159,6 +165,7 @@ def plot_benchmark(
     override_legend: List[str] = None,
     color_override: List[int] = None,
     auto_sort=True,
+    fixed_bar_width=1.8,
 ) -> None:
     """Plot benchmark results."""
     with plt.style.context(["ieee"]):
@@ -173,7 +180,7 @@ def plot_benchmark(
             # XXX manually adjust as needed
             # Adjust bar width according to number of transpilers
             transpiler_count = len(metric.saved_results.keys())
-            bar_width = 3 / transpiler_count  # 1.8
+            bar_width = fixed_bar_width / transpiler_count  # 3
 
             cmap = plt.cm.get_cmap("tab10", 10)  # transpiler_count)
             if color_override is not None:
@@ -186,7 +193,9 @@ def plot_benchmark(
             sorted_results = metric.prepare_plot_data(auto_sort)
 
             if plot_type == "bar":
-                _plot_bars(ax, cmap, sorted_results, transpiler_count, bar_width)
+                _plot_bars(
+                    ax, cmap, sorted_results, transpiler_count, bar_width
+                )
                 _configure_plot(
                     ax,
                     metric.pretty_name,
@@ -211,7 +220,11 @@ def plot_benchmark(
 
             plt.show()
 
-            if save and metric == benchmark.metrics[0]:
+            if (
+                save
+                and metric == benchmark.metrics[0]
+                or metric == benchmark.metrics[1]
+            ):
                 # # fig.savefig(f"{metric.name}_benchmark.svg", dpi=300)
                 # fig.savefig(f"{filename}_{metric.name}_benchmark.svg", dpi=300)
                 # save fig with no cropping
