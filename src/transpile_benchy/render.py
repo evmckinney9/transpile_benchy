@@ -171,7 +171,12 @@ def plot_benchmark(
     with plt.style.context(["ieee"]):
         plt.rcParams["text.usetex"] = True
 
-        for metric in benchmark.metrics:
+        for m, metric in enumerate(benchmark.metrics):
+            if legend_show and m == 0:
+                legend_show = True
+            else:
+                legend_show = False
+
             if metric.name == "accepted_subs":
                 continue  # We are not plotting this
 

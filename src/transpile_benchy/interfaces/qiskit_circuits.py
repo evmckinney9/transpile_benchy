@@ -182,12 +182,12 @@ def two_local_function_generator(entanglement_gate, func_name):
 
 
 # Create functions using the generator:
-twolocalcnot = two_local_function_generator(CXGate(), "twolocalcnot")
-twolocaliswap = two_local_function_generator(iSwapGate(), "twolocaliswap")
-twolocalsqrtiswap = two_local_function_generator(
-    iSwapGate().power(1 / 2), "twolocalsqrtiswap"
+twolocalcnot = two_local_function_generator(CXGate(), "fullcnot")
+twolocaliswap = two_local_function_generator(iSwapGate(), "fulliswap")
+twolocalsqiswap = two_local_function_generator(
+    iSwapGate().power(1 / 2), "fullsqiswap"
 )
-twolocalecp = two_local_function_generator(ecp, "twolocalecp")
+twolocalecp = two_local_function_generator(ecp, "fullecp")
 
 
 # List of all available circuits
@@ -204,6 +204,6 @@ available_circuits = [
     grover,
     twolocalcnot,
     twolocaliswap,
-    twolocalsqrtiswap,
+    twolocalsqiswap,
     twolocalecp,
 ]

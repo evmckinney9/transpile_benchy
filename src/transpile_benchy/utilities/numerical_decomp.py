@@ -23,7 +23,12 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 from qiskit import QuantumCircuit
-from qiskit.algorithms.optimizers import NELDER_MEAD, P_BFGS, Optimizer, OptimizerResult
+from qiskit.algorithms.optimizers import (
+    NELDER_MEAD,
+    P_BFGS,
+    Optimizer,
+    OptimizerResult,
+)
 from qiskit.circuit import Parameter
 from qiskit.circuit.library import UGate
 from qiskit.extensions import UnitaryGate
@@ -119,13 +124,15 @@ class CircuitAnsatzDecomposer(ABC):
         self.ansatz = ansatz
         self.parameter_values = []
         self.parameter_count = len(ansatz.parameters)
-        self.convergence_threshold = convergence_threshold or self.default_threshold
+        self.convergence_threshold = (
+            convergence_threshold or self.default_threshold
+        )
         for _ in range(self.reinitialize_attempts):
-            self._optimize_parameters(target)
+            ret = self._optimize_parameters(target)
             if self.converged:
                 break
 
-        # print("Final cost: ", ret.fun)
+        print("Final cost: ", ret.fun)
         # bind the parameters to the circuit
         return ansatz.assign_parameters(self.parameter_values)
 
@@ -214,7 +221,8 @@ class LinearAnsatz(CircuitAnsatzDecomposer):
             basis_gate_params = [
                 Parameter(f"p{i:03}")
                 for i in range(
-                    self.parameter_count, self.parameter_count + basis_param_len
+                    self.parameter_count,
+                    self.parameter_count + basis_param_len,
                 )
             ]
             basis_gate = basis_gate(*basis_gate_params)
@@ -242,7 +250,9 @@ class LinearAnsatz(CircuitAnsatzDecomposer):
             for i in edge_indices:
                 u_params = [
                     Parameter(f"p{i:03}")
-                    for i in range(self.parameter_count, self.parameter_count + 3)
+                    for i in range(
+                        self.parameter_count, self.parameter_count + 3
+                    )
                 ]
                 self.parameter_count += 3
                 self.ansatz.append(UGate(*u_params), [i])
@@ -277,7 +287,11 @@ class HilbertSchmidt(CircuitAnsatzDecomposer):
         """
         dim = target_unitary.shape[0]
         return (
-            1 - np.abs(np.trace(current_unitary @ np.matrix.getH(target_unitary))) / dim
+            1
+            - np.abs(
+                np.trace(current_unitary @ np.matrix.getH(target_unitary))
+            )
+            / dim
         )
 
 
@@ -297,7 +311,9 @@ class MakhlinFunctional(CircuitAnsatzDecomposer):
 
     def _cost_function(self, target: UnitaryGate, x: np.ndarray) -> float:
         """Evaluate the cost function of the decomposition."""
-        assert target.num_qubits == 2, "Makhlin functional only defined for 2 qubits."
+        assert (
+            target.num_qubits == 2
+        ), "Makhlin functional only defined for 2 qubits."
         bind_circuit = self.ansatz.assign_parameters(x)
         current_u = Operator(bind_circuit).data
         target_u = Operator(target).data
