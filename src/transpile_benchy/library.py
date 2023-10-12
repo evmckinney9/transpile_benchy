@@ -9,6 +9,7 @@ from transpile_benchy.interfaces.qasm_interface import (
     BQSKitInterface,
     QASMBench,
     RedQueen,
+    Hardcoded,
 )
 from transpile_benchy.interfaces.qiskit_interface import QiskitCircuitInterface
 
@@ -26,6 +27,8 @@ class CircuitLibrary:
             self.interfaces = interfaces
         else:  # add all interfaces
             self.interfaces = []
+            # hardcoded goes first so it will skip loading from others
+            self.interfaces.append(Hardcoded())
             self.interfaces.append(QASMBench())
             self.interfaces.append(RedQueen())
             # self.interfaces.append(MQTBench(num_qubits=0))

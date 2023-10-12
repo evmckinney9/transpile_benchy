@@ -18,6 +18,7 @@ from qiskit.circuit.library.arithmetic.adders.cdkm_ripple_carry_adder import (
 )
 from qiskit.circuit.library.arithmetic.multipliers import RGQFTMultiplier
 from qiskit.circuit.library.basis_change import QFT
+from qiskit.circuit.library import TwoLocal
 
 depth = 4  # arbitary idk what to set this to
 
@@ -32,7 +33,9 @@ def vqe_linear(q):
         num_qubits=q, entanglement="linear", reps=depth * 2
     )
     for param in vqe_circuit_linear.parameters:
-        vqe_circuit_linear.assign_parameters({param: np.random.rand()}, inplace=1)
+        vqe_circuit_linear.assign_parameters(
+            {param: np.random.rand()}, inplace=1
+        )
     return vqe_circuit_linear
 
 
@@ -40,9 +43,13 @@ def vqe_full(q):
     """Return a VQE circuit with full entanglement."""
     # set np random seed
     # np.random.seed(42)
-    vqe_circuit_full = EfficientSU2(num_qubits=q, entanglement="full", reps=depth * 2)
+    vqe_circuit_full = EfficientSU2(
+        num_qubits=q, entanglement="full", reps=depth * 2
+    )
     for param in vqe_circuit_full.parameters:
-        vqe_circuit_full.assign_parameters({param: np.random.rand()}, inplace=1)
+        vqe_circuit_full.assign_parameters(
+            {param: np.random.rand()}, inplace=1
+        )
     return vqe_circuit_full
 
 
@@ -73,7 +80,10 @@ def qaoa(q):
         qc_p.rzz(2 * np.random.rand(), pair[0], pair[1])
         qc_p.barrier()
     qaoa_qc = QAOAAnsatz(
-        cost_operator=qc_p, reps=depth, initial_state=None, mixer_operator=qc_mix
+        cost_operator=qc_p,
+        reps=depth,
+        initial_state=None,
+        mixer_operator=qc_mix,
     )
     return qaoa_qc
 
@@ -126,7 +136,9 @@ def hlf(q):
 # Grover
 def grover(q):
     """Return a Grover circuit."""
-    q = int(q / 2)  # Grover's take so long because of the MCMT, do a smaller circuit
+    q = int(
+        q / 2
+    )  # Grover's take so long because of the MCMT, do a smaller circuit
     # set numpy seed
     np.random.seed(42)
     # integer iteration
@@ -141,6 +153,43 @@ def grover(q):
     return grover_qc
 
 
+# TwoLocal
+# CX, iSWAP, sqrt(iSWAP), ECP
+# twolocalcnot_n16
+# twolocaliswap_n16
+# twolocalsqrtiswap_n16
+# twolocalecp_n16
+from qiskit.circuit.library import TwoLocal, CXGate, iSwapGate
+from qiskit.quantum_info.operators import Operator
+
+ecp = QuantumCircuit(2)
+ecp.append(iSwapGate().power(1 / 2), [0, 1])
+ecp.swap(0, 1)
+ecp = ecp.to_gate()
+
+
+def two_local_function_generator(entanglement_gate, func_name):
+    def twolocal(q):
+        return TwoLocal(
+            num_qubits=q,
+            reps=depth,
+            rotation_blocks=["rx", "ry"],
+            entanglement_blocks=entanglement_gate,
+        )
+
+    twolocal.__name__ = func_name
+    return twolocal
+
+
+# Create functions using the generator:
+twolocalcnot = two_local_function_generator(CXGate(), "twolocalcnot")
+twolocaliswap = two_local_function_generator(iSwapGate(), "twolocaliswap")
+twolocalsqrtiswap = two_local_function_generator(
+    iSwapGate().power(1 / 2), "twolocalsqrtiswap"
+)
+twolocalecp = two_local_function_generator(ecp, "twolocalecp")
+
+
 # List of all available circuits
 available_circuits = [
     vqe_full,
@@ -153,4 +202,8 @@ available_circuits = [
     ghz,
     hlf,
     grover,
+    twolocalcnot,
+    twolocaliswap,
+    twolocalsqrtiswap,
+    twolocalecp,
 ]
