@@ -1,6 +1,5 @@
 """MQTBench submodule interface."""
 from typing import Dict, List, Optional
-
 # from mqt.bench.benchmark_generator import get_benchmark
 # from mqt.bench.utils import get_supported_benchmarks
 from qiskit import QuantumCircuit
@@ -32,7 +31,9 @@ class MQTBench(SubmoduleInterface):
         return NotImplementedError()
         # return get_supported_benchmarks()
 
-    def _load_circuit(self, circuit_str: str, num_qubits=None) -> QuantumCircuit:
+    def _load_circuit(
+        self, circuit_str: str, num_qubits=None
+    ) -> QuantumCircuit:
         """Load a QuantumCircuit from a string."""
         return NotImplementedError()
         # try:
