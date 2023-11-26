@@ -7,6 +7,7 @@ from transpile_benchy.interfaces.abc_interface import SubmoduleInterface
 # from transpile_benchy.interfaces.mqt_interface import MQTBench
 from transpile_benchy.interfaces.qasm_interface import (
     BQSKitInterface,
+    Hardcoded,
     QASMBench,
     RedQueen,
     Hardcoded,

@@ -189,7 +189,6 @@ twolocalsqrtiswap = two_local_function_generator(
 )
 twolocalecp = two_local_function_generator(ecp, "twolocalecp")
 
-
 # List of all available circuits
 available_circuits = [
     vqe_full,
@@ -205,5 +204,3 @@ available_circuits = [
     twolocalcnot,
     twolocaliswap,
     twolocalsqrtiswap,
-    twolocalecp,
-]
