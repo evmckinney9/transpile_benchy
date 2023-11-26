@@ -204,3 +204,4 @@ available_circuits = [
     twolocalcnot,
     twolocaliswap,
     twolocalsqrtiswap,
+]
