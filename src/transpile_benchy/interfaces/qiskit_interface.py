@@ -5,6 +5,7 @@ SubmoduleInterface. It is intended to be used for submodules that are
 written in Qiskit, and have a set of functions which return
 QuantumCircuits.
 """
+
 from typing import Callable, Dict, List, Optional, Type
 
 from qiskit import QuantumCircuit
@@ -66,11 +67,11 @@ class QuantumCircuitFactory(SubmoduleInterface):
 
     def _get_all_circuits(self) -> List[str]:
         """Return a list of all possible circuit names."""
-        return [f"{self.function_type.__name__}_{n}" for n in self.num_qubits]
+        return [f"{self.function_type.__name__}_n{n}" for n in self.num_qubits]
 
     def _load_circuit(self, circuit_str: str) -> QuantumCircuit:
         """Create a quantum circuit given the circuit name."""
-        num_qubits = int(circuit_str.split("_")[-1])
+        num_qubits = int(circuit_str.split("_")[-1][1:])  # _nN -> N
         circuit = self.function_type(num_qubits)
         circuit.name = circuit_str
         return circuit
