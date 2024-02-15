@@ -24,8 +24,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 from qiskit import QuantumCircuit
 from qiskit.circuit import Parameter
-from qiskit.circuit.library import UGate
-from qiskit.extensions import UnitaryGate
+from qiskit.circuit.library import UGate, UnitaryGate
 from qiskit.quantum_info import Operator, average_gate_fidelity
 from qiskit_algorithms.optimizers import NELDER_MEAD, P_BFGS, Optimizer, OptimizerResult
 from weylchamber import J_T_LI
