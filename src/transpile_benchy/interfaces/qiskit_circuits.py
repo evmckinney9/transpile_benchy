@@ -3,22 +3,25 @@
 Each function returns a QuantumCircuit object, only paramerized by the
 number of qubits.
 """
+
 import networkx as nx
 import numpy as np
 from qiskit import QuantumCircuit
-from qiskit.algorithms import AmplificationProblem, Grover
 from qiskit.circuit.library import (
+    CXGate,
     EfficientSU2,
     HiddenLinearFunction,
     QAOAAnsatz,
     QuantumVolume,
+    TwoLocal,
+    iSwapGate,
 )
 from qiskit.circuit.library.arithmetic.adders.cdkm_ripple_carry_adder import (
     CDKMRippleCarryAdder,
 )
 from qiskit.circuit.library.arithmetic.multipliers import RGQFTMultiplier
 from qiskit.circuit.library.basis_change import QFT
-from qiskit.circuit.library import TwoLocal
+from qiskit_algorithms import AmplificationProblem, Grover
 
 depth = 4  # arbitary idk what to set this to
 
@@ -33,9 +36,7 @@ def vqe_linear(q):
         num_qubits=q, entanglement="linear", reps=depth * 2
     )
     for param in vqe_circuit_linear.parameters:
-        vqe_circuit_linear.assign_parameters(
-            {param: np.random.rand()}, inplace=1
-        )
+        vqe_circuit_linear.assign_parameters({param: np.random.rand()}, inplace=1)
     return vqe_circuit_linear
 
 
@@ -43,13 +44,9 @@ def vqe_full(q):
     """Return a VQE circuit with full entanglement."""
     # set np random seed
     # np.random.seed(42)
-    vqe_circuit_full = EfficientSU2(
-        num_qubits=q, entanglement="full", reps=depth * 2
-    )
+    vqe_circuit_full = EfficientSU2(num_qubits=q, entanglement="full", reps=depth * 2)
     for param in vqe_circuit_full.parameters:
-        vqe_circuit_full.assign_parameters(
-            {param: np.random.rand()}, inplace=1
-        )
+        vqe_circuit_full.assign_parameters({param: np.random.rand()}, inplace=1)
     return vqe_circuit_full
 
 
@@ -136,9 +133,7 @@ def hlf(q):
 # Grover
 def grover(q):
     """Return a Grover circuit."""
-    q = int(
-        q / 2
-    )  # Grover's take so long because of the MCMT, do a smaller circuit
+    q = int(q / 2)  # Grover's take so long because of the MCMT, do a smaller circuit
     # set numpy seed
     np.random.seed(42)
     # integer iteration
@@ -159,9 +154,6 @@ def grover(q):
 # twolocaliswap_n16
 # twolocalsqrtiswap_n16
 # twolocalecp_n16
-from qiskit.circuit.library import TwoLocal, CXGate, iSwapGate
-from qiskit.quantum_info.operators import Operator
-
 ecp = QuantumCircuit(2)
 ecp.append(iSwapGate().power(1 / 2), [0, 1])
 ecp.swap(0, 1)
@@ -169,6 +161,8 @@ ecp = ecp.to_gate()
 
 
 def two_local_function_generator(entanglement_gate, func_name):
+    """Return a function that returns a TwoLocal circuit."""
+
     def twolocal(q):
         return TwoLocal(
             num_qubits=q,
