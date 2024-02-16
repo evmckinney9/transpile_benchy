@@ -8,11 +8,11 @@ processing methods and returns the resulting circuit.
 
 import time
 from abc import ABC, abstractmethod
+from typing import List
 
 from qiskit.passmanager.compilation_status import PropertySet
 from qiskit.transpiler import PassManager
 from qiskit.transpiler.basepasses import BasePass
-from typing import List
 
 from transpile_benchy.metrics.abc_metrics import MetricInterface
 
@@ -54,14 +54,13 @@ class CustomPassManager(ABC):
     def _append_metric_pass(self, metric: MetricInterface):
         """Append an analysis pass, using transpiler-specific configuration."""
         self.metric_passes.append(metric.construct_pass(self))
-    
+
     def _append_metric_dependencies(self, tasks: List[BasePass]):
         """Append a pass to run before the metrics.
-        
+
         E.g. gate consolidation, or other pre-processing.
         """
         self.metric_dependencies.append(tasks)
-
 
     def run(self, circuit):
         """Run the transpiler on the circuit."""

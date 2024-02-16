@@ -5,6 +5,7 @@ calculates metrics on the transpiled circuits, and plots the results.
 The plots compare the metrics of the different transpilers on each
 circuit.
 """
+
 from logging import Logger
 from typing import List
 
@@ -39,9 +40,7 @@ class Benchmark:
         self.logger = logger
 
         # check that all the transpilers have different names
-        if len(set([t.name for t in self.transpilers])) != len(
-            self.transpilers
-        ):
+        if len(set([t.name for t in self.transpilers])) != len(self.transpilers):
             raise ValueError("Transpilers must have unique names")
 
         # give each transpiler a reference to the metrics
@@ -65,9 +64,7 @@ class Benchmark:
         """Attempt to transpile, returns transpiled circuit or raises Error."""
         if not self._filter_circuit(circuit):
             if self.logger:
-                self.logger.debug(
-                    f"Skipping circuit {circuit.name} due to filtering"
-                )
+                self.logger.debug(f"Skipping circuit {circuit.name} due to filtering")
             return None
         if self.logger:
             self.logger.debug(
@@ -138,10 +135,7 @@ class Benchmark:
         # Error checking
         try:
             assert metric in self.metrics
-            assert (
-                transpiler_1 in self.transpilers
-                and transpiler_2 in self.transpilers
-            )
+            assert transpiler_1 in self.transpilers and transpiler_2 in self.transpilers
         except AssertionError:
             raise ValueError("Invalid metric or transpiler")
 
@@ -162,17 +156,14 @@ class Benchmark:
                 total_2 += result_2.average
 
                 if result_1.average == 0:
-                    if (
-                        result_2.average == 0
-                    ):  # The percentages are equal, no change
+                    if result_2.average == 0:  # The percentages are equal, no change
                         change_percentage = 0
                     else:  # result_1 is zero but result_2 not, ie ~infinite increase
                         change_percentage = float("inf")
 
                 else:  # Normal case, result_1.average isn't zero
                     change_percentage = (
-                        (result_2.average - result_1.average)
-                        / result_1.average
+                        (result_2.average - result_1.average) / result_1.average
                     ) * 100
 
                 change_percentages.append(change_percentage)
@@ -181,9 +172,7 @@ class Benchmark:
         # Calculate average change and aggregate change
         average_change = sum(change_percentages) / len(change_percentages)
         aggregate_change = (
-            ((total_2 - total_1) / total_1) * 100
-            if total_1 != 0
-            else float("inf")
+            ((total_2 - total_1) / total_1) * 100 if total_1 != 0 else float("inf")
         )
 
         if metric.is_lower_better:
@@ -220,15 +209,11 @@ class Benchmark:
         summary = {}
 
         if transpiler_1 is None or transpiler_2 is None:
-            raise ValueError(
-                "One or both specified transpilers could not be found."
-            )
+            raise ValueError("One or both specified transpilers could not be found.")
 
         for metric in self.metrics:
             # calculate/store statistics for this metric on pair of transpilers
-            stats = self._calculate_statistics(
-                metric, transpiler_1, transpiler_2
-            )
+            stats = self._calculate_statistics(metric, transpiler_1, transpiler_2)
             summary[metric.name] = {
                 "average_change": stats["average_change"],
                 "aggregrate_change": stats["aggregate_change"],

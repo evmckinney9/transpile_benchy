@@ -1,4 +1,5 @@
 """Depth and Total gate count metrics for transpile_benchy using monodromy."""
+
 from monodromy.depthPass import MonodromyCountSwaps, MonodromyDepth, MonodromyTotal
 from qiskit.circuit.library import CXGate
 

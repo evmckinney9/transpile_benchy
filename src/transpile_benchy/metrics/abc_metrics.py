@@ -4,6 +4,7 @@ The abstract method calculate() should implement the calculation of the
 metric from a given QuantumCircuit. An example metric DepthMetric is
 provided.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

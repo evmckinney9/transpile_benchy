@@ -36,9 +36,7 @@ def _initialize_plot(legend_show: bool) -> Tuple[Figure, Axes]:
         )
         ax = axs[1]
     else:
-        fig, ax = plt.subplots(
-            figsize=(3.5, ref_size)
-        )  # Just 2 inch for the plot
+        fig, ax = plt.subplots(figsize=(3.5, ref_size))  # Just 2 inch for the plot
     return fig, ax
 
 
@@ -198,9 +196,7 @@ def plot_benchmark(
             sorted_results = metric.prepare_plot_data(auto_sort)
 
             if plot_type == "bar":
-                _plot_bars(
-                    ax, cmap, sorted_results, transpiler_count, bar_width
-                )
+                _plot_bars(ax, cmap, sorted_results, transpiler_count, bar_width)
                 _configure_plot(
                     ax,
                     metric.pretty_name,

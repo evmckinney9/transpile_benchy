@@ -1,4 +1,5 @@
 """Timer metric for transpile_benchy."""
+
 from transpile_benchy.metrics.abc_metrics import DoNothing, MetricInterface
 
 

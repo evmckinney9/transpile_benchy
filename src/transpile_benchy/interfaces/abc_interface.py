@@ -12,6 +12,7 @@ which return QuantumCircuits. The latter is not yet implemented.
 Also, we write using Iterator, for sake of memory efficiency, don't want
 to spend time building all QuantumCircuits, only build them when needed.
 """
+
 import re
 from abc import ABC, abstractmethod
 from collections.abc import Iterator
