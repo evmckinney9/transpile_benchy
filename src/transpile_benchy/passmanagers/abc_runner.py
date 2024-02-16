@@ -11,6 +11,8 @@ from abc import ABC, abstractmethod
 
 from qiskit.passmanager.compilation_status import PropertySet
 from qiskit.transpiler import PassManager
+from qiskit.transpiler.basepasses import BasePass
+from typing import List
 
 from transpile_benchy.metrics.abc_metrics import MetricInterface
 
@@ -34,6 +36,7 @@ class CustomPassManager(ABC):
         self.name = name or self.__class__.__name__
         self.property_set = PropertySet()
         self.metric_passes = PassManager()
+        self.metric_dependencies = PassManager()
         self.stages_builder = self.stage_builder()
         self.timer = {}  # store time information
 
@@ -49,8 +52,16 @@ class CustomPassManager(ABC):
         self.metric_passes = PassManager()
 
     def _append_metric_pass(self, metric: MetricInterface):
-        """Append a analysis pass, using transpiler-specific configuration."""
+        """Append an analysis pass, using transpiler-specific configuration."""
         self.metric_passes.append(metric.construct_pass(self))
+    
+    def _append_metric_dependencies(self, tasks: List[BasePass]):
+        """Append a pass to run before the metrics.
+        
+        E.g. gate consolidation, or other pre-processing.
+        """
+        self.metric_dependencies.append(tasks)
+
 
     def run(self, circuit):
         """Run the transpiler on the circuit."""
@@ -64,6 +75,11 @@ class CustomPassManager(ABC):
             self.property_set.update(stage.property_set)
             stage_start = time.time()  # end timer for each stage
             self.timer[f"{stage.__class__.__name__}_runtime"] = stage_end - stage_start
+
+        # run optional metric dependencies
+        self.metric_dependencies.property_set = self.property_set
+        circuit = self.metric_dependencies.run(circuit)
+        self.property_set.update(self.metric_dependencies.property_set)
 
         # run metrics
         self.metric_passes.property_set = self.property_set
